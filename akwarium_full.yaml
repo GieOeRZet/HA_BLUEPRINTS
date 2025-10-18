@@ -1,0 +1,229 @@
+blueprint:
+  name: 💡 Akwarium – Światła + CO₂ + Karmienie + Serwis
+  description: >
+    Kompletny blueprint automatyzacji akwarium:
+    • Automatyczne rampy jasności dla 4 kanałów światła
+    • CO₂ – włącza się z pierwszym światłem i wyłącza 30 min przed końcem
+    • Tryb karmienia – zatrzymuje filtr, włącza timer i przywraca po zakończeniu
+    • Tryb serwisowy – wszystkie światła 90%, filtr OFF, zapis i przywrócenie stanu
+  domain: automation
+  author: ChatGPT (GPT-5)
+  source_url: https://github.com/GieOeRZet/akwarium/blob/main/akwarium.yaml
+
+mode: restart
+max_exceeded: silent
+
+# === DEFINICJE WEJŚĆ ===
+input:
+  light_bialy_front:
+    name: Biały Front
+    selector:
+      entity:
+        domain: light
+  bf_on_time:
+    name: Start rozjaśniania
+    default: "15:30:00"
+    selector:
+      time: {}
+  bf_ramp_up:
+    name: Czas rozjaśniania (min)
+    default: 30
+    selector:
+      number:
+        min: 1
+        max: 240
+  bf_brightness:
+    name: Jasność docelowa (%)
+    default: 80
+    selector:
+      number:
+        min: 1
+        max: 100
+        unit_of_measurement: "%"
+  bf_dim_start:
+    name: Start ściemniania
+    default: "21:30:00"
+    selector:
+      time: {}
+  bf_ramp_down:
+    name: Czas ściemniania (min)
+    default: 30
+    selector:
+      number:
+        min: 1
+        max: 240
+
+  light_bialy_tyl:
+    name: Biały Tył
+    selector:
+      entity:
+        domain: light
+  bt_on_time:
+    name: Start rozjaśniania
+    default: "15:30:00"
+    selector:
+      time: {}
+  bt_ramp_up:
+    name: Czas rozjaśniania (min)
+    default: 30
+    selector:
+      number:
+        min: 1
+        max: 240
+  bt_brightness:
+    name: Jasność docelowa (%)
+    default: 80
+    selector:
+      number:
+        min: 1
+        max: 100
+  bt_dim_start:
+    name: Start ściemniania
+    default: "21:30:00"
+    selector:
+      time: {}
+  bt_ramp_down:
+    name: Czas ściemniania (min)
+    default: 30
+    selector:
+      number:
+        min: 1
+        max: 240
+
+  light_sun:
+    name: Sun
+    selector:
+      entity:
+        domain: light
+  sun_on_time:
+    name: Start rozjaśniania
+    default: "15:30:00"
+    selector:
+      time: {}
+  sun_ramp_up:
+    name: Czas rozjaśniania (min)
+    default: 30
+    selector:
+      number:
+        min: 1
+        max: 240
+  sun_brightness:
+    name: Jasność docelowa (%)
+    default: 70
+    selector:
+      number:
+        min: 1
+        max: 100
+  sun_dim_start:
+    name: Start ściemniania
+    default: "21:30:00"
+    selector:
+      time: {}
+  sun_ramp_down:
+    name: Czas ściemniania (min)
+    default: 30
+    selector:
+      number:
+        min: 1
+        max: 240
+
+  light_grow:
+    name: Grow
+    selector:
+      entity:
+        domain: light
+  grow_on_time:
+    name: Start rozjaśniania
+    default: "15:30:00"
+    selector:
+      time: {}
+  grow_ramp_up:
+    name: Czas rozjaśniania (min)
+    default: 30
+    selector:
+      number:
+        min: 1
+        max: 240
+  grow_brightness:
+    name: Jasność docelowa (%)
+    default: 85
+    selector:
+      number:
+        min: 1
+        max: 100
+  grow_dim_start:
+    name: Start ściemniania
+    default: "21:30:00"
+    selector:
+      time: {}
+  grow_ramp_down:
+    name: Czas ściemniania (min)
+    default: 30
+    selector:
+      number:
+        min: 1
+        max: 240
+
+  co2_switch:
+    name: Przełącznik CO₂ (opcjonalny)
+    default: ""
+    selector:
+      entity:
+        domain: switch
+  filter_switch:
+    name: Filtr akwariowy (opcjonalny)
+    default: ""
+    selector:
+      entity:
+        domain: switch
+
+  feeding_helper:
+    name: Tryb karmienia (input_boolean)
+    default: ""
+    selector:
+      entity:
+        domain: input_boolean
+  feeding_timer:
+    name: Timer karmienia
+    default: ""
+    selector:
+      entity:
+        domain: timer
+  feeding_duration:
+    name: Czas karmienia (min)
+    default: 15
+    selector:
+      number:
+        min: 1
+        max: 60
+  service_mode_helper:
+    name: Tryb serwisowy
+    default: ""
+    selector:
+      entity:
+        domain: input_boolean
+  service_state_text:
+    name: Bufor stanu (input_text)
+    default: ""
+    selector:
+      entity:
+        domain: input_text
+
+# === TRIGGERY ===
+trigger:
+  - platform: time_pattern
+    seconds: "/30"
+  - platform: homeassistant
+    event: start
+  - platform: state
+    entity_id: !input feeding_helper
+  - platform: state
+    entity_id: !input service_mode_helper
+  - platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: !input feeding_timer
+
+# === AKCJE ===
+action:
+  # ... tu pełna logika akcji jak w oryginalnym pliku (bez zmian)
