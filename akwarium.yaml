@@ -2,37 +2,34 @@ blueprint:
   name: 💡 Akwarium – Oświetlenie + CO₂ + Karmienie + Serwis
   description: >
     Pełny blueprint automatyzacji dla akwarium:
-      • Steruje 4 kanałami oświetlenia z płynnymi rampami jasności (1% krok co 30 s)
-      • Obsługuje automatyczne włączanie i wyłączanie CO₂
-      • Tryb karmienia: wyłącza filtr i przywraca po czasie (lub manualnie)
-      • Tryb serwisowy: zapisuje i przywraca stany świateł i filtra
-      • Możliwość ręcznego przypisania wszystkich helperów
-
-  # 👉 Import przez URL w Home Assistant
-  source_url: https://github.com/GieOeRZet/akwarium/blob/main/akwarium.yaml
-
+      • 4 kanały oświetlenia z rampami (Biały Front, Biały Tył, Sun, Grow)
+      • CO₂: włącza się przy najwcześniejszym starcie światła, wyłącza 30 min przed ostatnim wygaszeniem
+      • Tryb karmienia: wyłącza filtr, uruchamia timer, przywraca filtr po zakończeniu; ręczne przerwanie działa
+      • Tryb serwisowy: zapisuje stan świateł + filtra do input_text i ustawia światła na 90% + wyłącza filtr
+      • Wszystkie helpery są opcjonalne — blueprint zabezpiecza wywołania usług gdy input jest pusty
   domain: automation
   author: ChatGPT (GPT-5)
+  source_url: https://github.com/GieOeRZet/akwarium/blob/main/akwarium.yaml
   homeassistant:
     min_version: 2024.8.0
 
-  ####################################################
-  #                     INPUTS                       #
-  ####################################################
+  ####################################
+  #               INPUTS             #
+  ####################################
   input:
-    # === Światła (4 kanały) ===
+    # === Kanał: Biały Front ===
     light_bialy_front:
-      name: Biały Front (light)
+      name: Biały Front (encja light)
       selector:
         entity:
           domain: light
     bf_on_time:
-      name: Start rozjaśniania
+      name: Biały Front – start rozjaśniania (HH:MM:SS)
       default: "15:30:00"
       selector:
         time: {}
     bf_ramp_up:
-      name: Czas rozjaśniania (min)
+      name: Biały Front – czas rozjaśniania (min)
       default: 30
       selector:
         number:
@@ -40,7 +37,7 @@ blueprint:
           max: 240
           unit_of_measurement: min
     bf_brightness:
-      name: Jasność docelowa (%)
+      name: Biały Front – docelowa jasność (%)
       default: 80
       selector:
         number:
@@ -48,12 +45,12 @@ blueprint:
           max: 100
           unit_of_measurement: "%"
     bf_dim_start:
-      name: Start wygaszania
+      name: Biały Front – start wygaszania (HH:MM:SS)
       default: "21:30:00"
       selector:
         time: {}
     bf_ramp_down:
-      name: Czas wygaszania (min)
+      name: Biały Front – czas wygaszania (min)
       default: 30
       selector:
         number:
@@ -61,18 +58,19 @@ blueprint:
           max: 240
           unit_of_measurement: min
 
+    # === Kanał: Biały Tył ===
     light_bialy_tyl:
-      name: Biały Tył
+      name: Biały Tył (encja light)
       selector:
         entity:
           domain: light
     bt_on_time:
-      name: Start rozjaśniania
+      name: Biały Tył – start rozjaśniania
       default: "15:40:00"
       selector:
         time: {}
     bt_ramp_up:
-      name: Czas rozjaśniania (min)
+      name: Biały Tył – czas rozjaśniania (min)
       default: 30
       selector:
         number:
@@ -80,7 +78,7 @@ blueprint:
           max: 240
           unit_of_measurement: min
     bt_brightness:
-      name: Jasność docelowa (%)
+      name: Biały Tył – docelowa jasność (%)
       default: 80
       selector:
         number:
@@ -88,12 +86,12 @@ blueprint:
           max: 100
           unit_of_measurement: "%"
     bt_dim_start:
-      name: Start wygaszania
+      name: Biały Tył – start wygaszania
       default: "21:40:00"
       selector:
         time: {}
     bt_ramp_down:
-      name: Czas wygaszania (min)
+      name: Biały Tył – czas wygaszania (min)
       default: 30
       selector:
         number:
@@ -101,18 +99,19 @@ blueprint:
           max: 240
           unit_of_measurement: min
 
+    # === Kanał: Sun ===
     light_sun:
-      name: Sun
+      name: Sun (encja light)
       selector:
         entity:
           domain: light
     sun_on_time:
-      name: Start rozjaśniania
+      name: Sun – start rozjaśniania
       default: "15:20:00"
       selector:
         time: {}
     sun_ramp_up:
-      name: Czas rozjaśniania (min)
+      name: Sun – czas rozjaśniania (min)
       default: 30
       selector:
         number:
@@ -120,7 +119,7 @@ blueprint:
           max: 240
           unit_of_measurement: min
     sun_brightness:
-      name: Jasność docelowa (%)
+      name: Sun – docelowa jasność (%)
       default: 70
       selector:
         number:
@@ -128,12 +127,12 @@ blueprint:
           max: 100
           unit_of_measurement: "%"
     sun_dim_start:
-      name: Start wygaszania
+      name: Sun – start wygaszania
       default: "21:20:00"
       selector:
         time: {}
     sun_ramp_down:
-      name: Czas wygaszania (min)
+      name: Sun – czas wygaszania (min)
       default: 30
       selector:
         number:
@@ -141,18 +140,19 @@ blueprint:
           max: 240
           unit_of_measurement: min
 
+    # === Kanał: Grow ===
     light_grow:
-      name: Grow
+      name: Grow (encja light)
       selector:
         entity:
           domain: light
     grow_on_time:
-      name: Start rozjaśniania
+      name: Grow – start rozjaśniania
       default: "15:10:00"
       selector:
         time: {}
     grow_ramp_up:
-      name: Czas rozjaśniania (min)
+      name: Grow – czas rozjaśniania (min)
       default: 30
       selector:
         number:
@@ -160,7 +160,7 @@ blueprint:
           max: 240
           unit_of_measurement: min
     grow_brightness:
-      name: Jasność docelowa (%)
+      name: Grow – docelowa jasność (%)
       default: 85
       selector:
         number:
@@ -168,12 +168,12 @@ blueprint:
           max: 100
           unit_of_measurement: "%"
     grow_dim_start:
-      name: Start wygaszania
+      name: Grow – start wygaszania
       default: "21:10:00"
       selector:
         time: {}
     grow_ramp_down:
-      name: Czas wygaszania (min)
+      name: Grow – czas wygaszania (min)
       default: 30
       selector:
         number:
@@ -183,13 +183,13 @@ blueprint:
 
     # === CO₂ i filtr ===
     co2_switch:
-      name: (opcjonalny) Przełącznik CO₂
+      name: (opcjonalny) Przełącznik CO₂ (switch)
       default: ""
       selector:
         entity:
           domain: switch
     filter_switch:
-      name: (opcjonalny) Filtr akwariowy
+      name: (opcjonalny) Filtr akwariowy (switch)
       default: ""
       selector:
         entity:
@@ -197,19 +197,19 @@ blueprint:
 
     # === Helpery ===
     feeding_helper:
-      name: (opcjonalny) Tryb karmienia
+      name: (opcjonalny) Helper – Tryb karmienia (input_boolean)
       default: ""
       selector:
         entity:
           domain: input_boolean
     feeding_timer:
-      name: (opcjonalny) Timer karmienia
+      name: (opcjonalny) Timer – karmienie (timer)
       default: ""
       selector:
         entity:
           domain: timer
     feeding_duration:
-      name: Czas karmienia (min)
+      name: Czas karmienia (minuty)
       default: 15
       selector:
         number:
@@ -217,50 +217,42 @@ blueprint:
           max: 120
           unit_of_measurement: min
     service_mode_helper:
-      name: (opcjonalny) Tryb serwisowy
+      name: (opcjonalny) Helper – Tryb serwisowy (input_boolean)
       default: ""
       selector:
         entity:
           domain: input_boolean
     service_state_text:
-      name: (opcjonalny) Bufor stanu
+      name: (opcjonalny) Bufor stanu (input_text)
       default: ""
       selector:
         entity:
           domain: input_text
 
-####################################################
-#                TRYB DZIAŁANIA                    #
-####################################################
+# ---------------------------
+# Mode i max_exceeded
+# ---------------------------
 mode: restart
 max_exceeded: silent
 
-####################################################
-#                   TRIGGERS                       #
-####################################################
+# ---------------------------
+# Triggery
+# (używamy tylko bezpiecznych triggerów)
+# ---------------------------
 trigger:
   - platform: time_pattern
-    seconds: "/30"
+    seconds: "/30"            # aktualizacja ramp co 30 sekund
   - platform: homeassistant
-    event: start
-    # ⏱️ Dodano opóźnienie 10s po starcie
-  - platform: state
-    entity_id: !input feeding_helper
-    to: "on"
-    enabled: true
-  
-  - platform: state
-    entity_id: !input service_mode_helper
-    enabled: "{{ service_mode_helper != '' }}"
+    event: start              # restart HA (dalej opóźniamy w akcji)
   - platform: event
     event_type: timer.finished
+    # event_data.entity_id może zostać podane przez !input podczas tworzenia automatyzacji
     event_data:
       entity_id: !input feeding_timer
-    enabled: "{{ feeding_timer != '' }}"
 
-####################################################
-#                   VARIABLES                      #
-####################################################
+# ---------------------------
+# Zmienne globalne (ułatwiają czytelność)
+# ---------------------------
 variables:
   lights:
     - id: bf
@@ -304,57 +296,75 @@ variables:
   service_mode_helper: !input service_mode_helper
   service_state_text: !input service_state_text
 
-####################################################
-#                    ACTIONS                       #
-####################################################
+# ---------------------------
+# Akcje
+# ---------------------------
 action:
-  - alias: "Opóźnienie po starcie Home Assistant"
+
+  ####################################
+  # 0) Opóźnienie po starcie HA (10s)
+  ####################################
+  - alias: "Delay po starcie HA"
     choose:
       - conditions: "{{ trigger.platform == 'homeassistant' }}"
         sequence:
           - delay: "00:00:10"
 
+  ####################################
+  # 1) Tryb serwisowy — zapis / tryb serwisowy / przywrócenie
+  ####################################
   - alias: "Tryb serwisowy"
     choose:
-      # --- Aktywacja trybu serwisowego ---
+      # --- Włączenie trybu serwisowego: zapis stanów, ustawienie świateł 90% i wyłączenie filtra ---
       - conditions: "{{ service_mode_helper != '' and is_state(service_mode_helper, 'on') }}"
         sequence:
+          # przygotowanie JSON z aktualnymi stanami
           - variables:
               saved_states: >
                 {% set s = {} %}
                 {% for l in lights %}
-                  {% set b = ((state_attr(l.entity, 'brightness')|int(0)) / 255 * 100) | round(0) %}
-                  {% set _ = s.update({ l.entity: {'on': is_state(l.entity,'on'), 'brightness': b } }) %}
+                  {% set b = (state_attr(l.entity, 'brightness') | int(0)) %}
+                  {% set pct = (b / 255 * 100) | round(0) if b else 0 %}
+                  {% set _ = s.update({ l.entity: {'on': is_state(l.entity,'on'), 'brightness': pct } }) %}
                 {% endfor %}
+                {% if co2_switch != '' %}
+                  {% set _ = s.update({'co2': is_state(co2_switch,'on')}) %}
+                {% endif %}
                 {% if filter_switch != '' %}
                   {% set _ = s.update({'filter': is_state(filter_switch,'on')}) %}
                 {% endif %}
                 {{ s | to_json }}
+          # zapis do input_text, jeśli skonfigurowano
           - choose:
               - conditions: "{{ service_state_text != '' }}"
                 sequence:
                   - service: input_text.set_value
                     target:
-                      entity_id: "{{ service_state_text }}"
+                      entity_id: !input service_state_text
                     data:
                       value: "{{ saved_states }}"
+          # ustawiamy wszystkie światła na 90% (jeśli encja zadeklarowana)
           - repeat:
               for_each: "{{ lights }}"
               sequence:
-                - service: light.turn_on
-                  target:
-                    entity_id: "{{ repeat.item.entity }}"
-                  data:
-                    brightness_pct: 90
+                - choose:
+                    - conditions: "{{ repeat.item.entity != '' }}"
+                      sequence:
+                        - service: light.turn_on
+                          target:
+                            entity_id: "{{ repeat.item.entity }}"
+                          data:
+                            brightness_pct: 90
+          # wyłączamy filtr jeśli jest skonfigurowany i jest ON
           - choose:
               - conditions: "{{ filter_switch != '' and is_state(filter_switch, 'on') }}"
                 sequence:
                   - service: switch.turn_off
                     target:
-                      entity_id: "{{ filter_switch }}"
-          - stop: "Tryb serwisowy aktywny"
+                      entity_id: !input filter_switch
+          - stop: "Tryb serwisowy aktywny — przerywam dalsze kroki."
 
-      # --- Dezaktywacja serwisu ---
+      # --- Wyłączenie trybu serwisowego: przywrócenie zapisanych stanów ---
       - conditions: "{{ service_mode_helper != '' and is_state(service_mode_helper, 'off') }}"
         sequence:
           - variables:
@@ -382,26 +392,38 @@ action:
                 sequence:
                   - service: switch.turn_on
                     target:
-                      entity_id: "{{ filter_switch }}"
+                      entity_id: !input filter_switch
+          - choose:
+              - conditions: "{{ co2_switch != '' and prev_json.get('co2', false) }}"
+                sequence:
+                  - service: switch.turn_on
+                    target:
+                      entity_id: !input co2_switch
 
+  ####################################
+  # 2) Tryb karmienia
+  ####################################
   - alias: "Tryb karmienia"
     choose:
       - conditions: "{{ feeding_helper != '' and is_state(feeding_helper, 'on') }}"
         sequence:
+          # Wyłącz filtr (jeśli zadeklarowany i jest ON)
           - choose:
               - conditions: "{{ filter_switch != '' and is_state(filter_switch, 'on') }}"
                 sequence:
                   - service: switch.turn_off
                     target:
-                      entity_id: "{{ filter_switch }}"
+                      entity_id: !input filter_switch
+          # Start timera (jeśli zadeklarowany)
           - choose:
               - conditions: "{{ feeding_timer != '' }}"
                 sequence:
                   - service: timer.start
                     target:
-                      entity_id: "{{ feeding_timer }}"
+                      entity_id: !input feeding_timer
                     data:
                       duration: "00:{{ '%02d' | format(feeding_duration | int) }}:00"
+          # Czekamy albo na wyłączenie helpera, albo na zakończenie timera
           - wait_for_trigger:
               - platform: state
                 entity_id: !input feeding_helper
@@ -413,26 +435,31 @@ action:
             timeout:
               minutes: "{{ feeding_duration }}"
             continue_on_timeout: true
-  
-            timeout:
-              minutes: "{{ feeding_duration }}"
-            continue_on_timeout: true
+          # Po zakończeniu: przywróć filtr (jeśli skonfigurowany)
           - choose:
               - conditions: "{{ filter_switch != '' }}"
                 sequence:
                   - service: switch.turn_on
                     target:
-                      entity_id: "{{ filter_switch }}"
+                      entity_id: !input filter_switch
+          # Anuluj timer (jeśli skonfigurowany)
           - choose:
               - conditions: "{{ feeding_timer != '' }}"
                 sequence:
                   - service: timer.cancel
                     target:
-                      entity_id: "{{ feeding_timer }}"
-          - service: input_boolean.turn_off
-            target:
-              entity_id: "{{ feeding_helper }}"
+                      entity_id: !input feeding_timer
+          # Wyłącz helper karmienia (upewnij się, że nie wywołujemy pustej encji)
+          - choose:
+              - conditions: "{{ feeding_helper != '' }}"
+                sequence:
+                  - service: input_boolean.turn_off
+                    target:
+                      entity_id: !input feeding_helper
 
+  ####################################
+  # 3) Sterowanie rampami świateł
+  ####################################
   - alias: "Sterowanie rampami świateł"
     repeat:
       for_each: "{{ lights }}"
@@ -443,29 +470,35 @@ action:
             dim_ts: "{{ as_timestamp(strptime(ch.dim_time, '%H:%M:%S')) }}"
             ramp_up_s: "{{ (ch.ramp_up_min | int) * 60 }}"
             ramp_down_s: "{{ (ch.ramp_down_min | int) * 60 }}"
-            target_pct: "{{ ch.target_pct | int }}"
-            now_ts: "{{ as_timestamp(now().strftime('%H:%M:%S')) }}"
+            target_pct: "{{ (ch.target_pct | int) if (ch.target_pct|int) > 0 else 1 }}"
+            now_ts: "{{ as_timestamp(now()) }}"
             current_pct: >
               {% if state_attr(ch.entity, 'brightness') is defined %}
-                {{ ((state_attr(ch.entity, 'brightness')|int(0))/255*100)|round(0) }}
-              {% else %} 0 {% endif %}
+                {{ ((state_attr(ch.entity,'brightness')|int(0))/255*100)|round(0) }}
+              {% else %}
+                0
+              {% endif %}
         - choose:
             # Rozjaśnianie
-            - conditions: "{{ on_ts <= now_ts < on_ts + ramp_up_s }}"
+            - conditions: >
+                {{ now_ts >= on_ts and now_ts < (on_ts + ramp_up_s) }}
               sequence:
                 - variables:
                     elapsed: "{{ now_ts - on_ts }}"
-                    pct: "{{ (elapsed / (ramp_up_s / target_pct)) | round(0) }}"
+                    seconds_per_pct: "{{ ramp_up_s / target_pct }}"
+                    pct_calc: "{{ (elapsed / seconds_per_pct) | round(0) | int }}"
+                    pct_final: "{{ [pct_calc, target_pct] | min }}"
                 - choose:
-                    - conditions: "{{ pct != current_pct }}"
+                    - conditions: "{{ pct_final != current_pct }}"
                       sequence:
                         - service: light.turn_on
                           target:
                             entity_id: "{{ ch.entity }}"
                           data:
-                            brightness_pct: "{{ pct }}"
-            # Utrzymanie jasności
-            - conditions: "{{ on_ts + ramp_up_s <= now_ts < dim_ts }}"
+                            brightness_pct: "{{ pct_final }}"
+            # Utrzymanie docelowego poziomu
+            - conditions: >
+                {{ now_ts >= (on_ts + ramp_up_s) and now_ts < dim_ts }}
               sequence:
                 - choose:
                     - conditions: "{{ current_pct != target_pct }}"
@@ -476,21 +509,26 @@ action:
                           data:
                             brightness_pct: "{{ target_pct }}"
             # Wygaszanie
-            - conditions: "{{ dim_ts <= now_ts < dim_ts + ramp_down_s }}"
+            - conditions: >
+                {{ now_ts >= dim_ts and now_ts < (dim_ts + ramp_down_s) }}
               sequence:
                 - variables:
-                    elapsed: "{{ now_ts - dim_ts }}"
-                    pct: "{{ target_pct - (elapsed / (ramp_down_s / target_pct)) | round(0) }}"
+                    elapsed_down: "{{ now_ts - dim_ts }}"
+                    seconds_per_pct_down: "{{ ramp_down_s / target_pct }}"
+                    dec: "{{ (elapsed_down / seconds_per_pct_down) | round(0) | int }}"
+                    pct_calc: "{{ (target_pct - dec) | round(0) | int }}"
+                    pct_final: "{{ [pct_calc, 0] | max }}"
                 - choose:
-                    - conditions: "{{ pct != current_pct }}"
+                    - conditions: "{{ pct_final != current_pct }}"
                       sequence:
                         - service: light.turn_on
                           target:
                             entity_id: "{{ ch.entity }}"
                           data:
-                            brightness_pct: "{{ [pct, 0]|max }}"
-            # Po wygaszeniu
-            - conditions: "{{ now_ts >= dim_ts + ramp_down_s }}"
+                            brightness_pct: "{{ pct_final }}"
+            # Po wygaszeniu — wyłącz światło
+            - conditions: >
+                {{ now_ts >= (dim_ts + ramp_down_s) }}
               sequence:
                 - choose:
                     - conditions: "{{ is_state(ch.entity, 'on') }}"
@@ -499,11 +537,14 @@ action:
                           target:
                             entity_id: "{{ ch.entity }}"
 
+  ####################################
+  # 4) Kontrola CO₂
+  ####################################
   - alias: "Kontrola CO₂"
     sequence:
       - variables:
-          first_on: "{{ (lights | sort(attribute='on_time') | first).on_time }}"
-          last_dim: "{{ (lights | sort(attribute='dim_time') | last).dim_time }}"
+          first_on: "{{ (lights | sort(attribute='on_time') | first).on_time if lights|length>0 else '00:00:00' }}"
+          last_dim: "{{ (lights | sort(attribute='dim_time') | last).dim_time if lights|length>0 else '23:59:00' }}"
           now_dt: "{{ now() }}"
           should_be_on: >
             {% set f = as_datetime(strptime(first_on, '%H:%M:%S')) %}
@@ -514,10 +555,11 @@ action:
             sequence:
               - service: switch.turn_on
                 target:
-                  entity_id: "{{ co2_switch }}"
-          - conditions: "{{ co2_switch != '' and not should_be_on and not is_state(co2_switch, 'off') }}"
+                  entity_id: !input co2_switch
+          - conditions: "{{ co2_switch != '' and (not should_be_on) and is_state(co2_switch, 'on') }}"
             sequence:
               - service: switch.turn_off
                 target:
-                  entity_id: "{{ co2_switch }}"
-                  
+                  entity_id: !input co2_switch
+
+# koniec blueprinta
