@@ -6,7 +6,7 @@ blueprint:
     oraz kontynuację rampy po restarcie Home Assistanta (z opóźnieniem 10 s).
     Zawiera minimalistyczne powiadomienia diagnostyczne z emoji.
     Wszystkie sekcje są opcjonalne — brak encji = brak akcji.
-
+  source_url: https://github.com/GieOeRZet/akwarium/blob/main/blueprints/automation/gieoerzet/akwarium.yaml
   domain: automation
 
   input:
