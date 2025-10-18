@@ -246,7 +246,9 @@ trigger:
     # ⏱️ Dodano opóźnienie 10s po starcie
   - platform: state
     entity_id: !input feeding_helper
-    enabled: "{{ feeding_helper != '' }}"
+    to: "on"
+    enabled: true
+  
   - platform: state
     entity_id: !input service_mode_helper
     enabled: "{{ service_mode_helper != '' }}"
@@ -402,12 +404,16 @@ action:
                       duration: "00:{{ '%02d' | format(feeding_duration | int) }}:00"
           - wait_for_trigger:
               - platform: state
-                entity_id: "{{ feeding_helper }}"
+                entity_id: !input feeding_helper
                 to: "off"
               - platform: event
                 event_type: timer.finished
                 event_data:
-                  entity_id: "{{ feeding_timer }}"
+                  entity_id: !input feeding_timer
+            timeout:
+              minutes: "{{ feeding_duration }}"
+            continue_on_timeout: true
+  
             timeout:
               minutes: "{{ feeding_duration }}"
             continue_on_timeout: true
