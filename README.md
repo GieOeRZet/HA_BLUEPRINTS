@@ -1,127 +1,147 @@
-🌊 Akwarium – Oświetlenie, CO₂ i Karmienie
+# 🌊 Akwarium – Oświetlenie, CO₂ i Karmienie  
+**Wersja:** `2025.02.UI1`  
+**Autor:** [GieOeRZet](https://github.com/GieOeRZet)  
+**Licencja:** [MIT](LICENSE)  
+**Kompatybilność:** Home Assistant 2024.12+  
+**Repozytorium:** [github.com/GieOeRZet/akwarium](https://github.com/GieOeRZet/akwarium)
 
-Wersja: 2025.02 (FINAL)
-Autor: GieOeRZet
-Licencja: MIT
-Repozytorium: https://github.com/GieOeRZet/akwarium
+---
 
-🧩 Opis
+## 🐠 Opis
 
-Kompletny blueprint automatyzujący akwarium w Home Assistant.
-Zarządza oświetleniem (4 kanały Shelly RGBW2 lub inne światła), systemem CO₂, filtrem i karmieniem.
+Blueprint do pełnej automatyzacji akwarium w **Home Assistant**,  
+obsługujący oświetlenie (do 4 kanałów Shelly RGBW2), CO₂, filtr i karmienie.  
 
-Wersja 2025.02 FINAL to w pełni dopracowana edycja z kompensacją ramp,
-która wznawia i kontynuuje rampy rozjaśniania oraz ściemniania po restarcie Home Assistant.
-Nie wymaga żadnych zewnętrznych skryptów ani integracji.
+✅ Pełna **kompensacja ramp** (rozjaśnianie i ściemnianie) – odporna na restart HA  
+✅ Aktualizacja ramp co minutę  
+✅ Obsługa karmienia z timerem i automatycznym włączaniem/wyłączaniem filtra  
+✅ Automatyczne sterowanie CO₂ względem ramp  
+✅ Brak światła nocnego – po zakończeniu ściemniania światła gasną  
 
-⚙️ Funkcjonalność
-💡 Oświetlenie
+---
 
-Obsługuje do 4 niezależnych kanałów:
+## 💡 Funkcje
 
-Front, Back, Sun, Grow
+| Funkcja | Opis |
+|----------|------|
+| 🌅 Rampy rozjaśniania | Płynne zwiększanie jasności od czasu startu rampy do wartości docelowej |
+| 🌙 Rampy ściemniania | Płynne wygaszanie świateł do pełnego zgaszenia |
+| 🔁 Kompensacja | Po restarcie HA automatycznie oblicza i przywraca właściwą jasność wg czasu dnia |
+| 💨 CO₂ | Włączane na czas ramp, wyłączane 30 min przed ściemnianiem |
+| 🍽️ Karmienie | Tryb karmienia – wyłącza filtr, uruchamia timer, po czasie przywraca filtr |
+| 💧 Filtr | Wyłączany automatycznie przy karmieniu, sterowany automatycznie |
+| ⏱️ Aktualizacja | Wszystkie rampy przeliczane co minutę |
+| 🩺 Diagnostyka | Powiadomienia o stanie systemu i komponentów |
 
-Każdy kanał ma:
+---
 
-Czas rozpoczęcia rozjaśniania (start_time)
+## ⚙️ Sekcje konfiguracyjne
 
-Jasność docelową (target_pct)
+### 💡 OŚWIETLENIE
+Blueprint obsługuje 4 kanały oświetlenia – każdy z osobnymi ustawieniami ramp:
 
-Długość rampy rozjaśniania (ramp_minutes)
+| Kanał | Nazwa | Domyślna jasność | Domyślny czas ramp | Opis |
+|-------|-------|------------------|--------------------|------|
+| 1 | **Front** | 80 % | 30 min | Główne światło przednie |
+| 2 | **Back** | 80 % | 30 min | Tylne światło akwarium |
+| 3 | **Sun** | 70 % | 30 min | Symulacja promieni słonecznych |
+| 4 | **Grow** | 85 % | 30 min | Światło wspomagające wzrost roślin |
 
-Czas rozpoczęcia ściemniania (dim_time)
+Każdy kanał ma pola:
+- `Start rozjaśniania` (godzina),
+- `Jasność docelowa (%)`,
+- `Czas rozjaśniania (min)`,
+- `Start ściemniania` (godzina),
+- `Czas ściemniania (min)`.
 
-Długość rampy ściemniania (dim_minutes)
+---
 
-Po restarcie HA światła natychmiast ustawiają się na właściwy poziom jasności (kompensacja).
+### 💨 CO₂
+- Przełącznik (switch) zaworu CO₂.  
+- Automatycznie uruchamiany przy starcie ramp,  
+  wyłączany **30 minut przed ściemnianiem**.
 
-Rampy są kontynuowane co minutę (dzięki time_pattern: "/1").
+---
 
-💨 CO₂
+### 💧 Filtr
+- Przełącznik (switch) zasilania filtra.  
+- Wyłączany na czas karmienia,  
+  włączany po zakończeniu timera.
 
-Automatyczne włączenie o najwcześniejszym czasie startu rampy.
+---
 
-Automatyczne wyłączenie 30 minut przed rozpoczęciem ściemniania.
+### 🍽️ Karmienie
+| Element | Typ | Opis |
+|----------|------|------|
+| `feeding_switch` | `input_boolean` | Aktywuje tryb karmienia |
+| `feeding_timer` | `timer` | Odmierza czas karmienia |
+| `feeding_duration` | `number` | Długość karmienia (minuty) |
 
-Działa niezależnie od świateł.
+- Po włączeniu karmienia: filtr zostaje wyłączony.  
+- Po upływie czasu z timera – filtr automatycznie się włącza, a karmienie wyłącza.
 
-💧 Filtr + 🍽️ Karmienie
+---
 
-Po włączeniu przycisku input_boolean (np. input_boolean.aquarium_feed):
+## 🔁 Tryb pracy
 
-Filtr zostaje wyłączony.
+| Sytuacja | Zachowanie |
+|-----------|-------------|
+| 💡 Start HA | 10 s opóźnienia → kompensacja ramp |
+| ⏱️ Co minutę | Aktualizacja jasności wg czasu dnia |
+| 🌇 W trakcie rampy | Jasność płynnie wzrasta lub maleje |
+| 🌙 Po rampie | Światła gasną |
+| 🕒 Restart | System natychmiast dopasowuje poziomy jasności |
 
-Uruchamiany jest timer (timer.aquarium_feed_timer).
+---
 
-Po zakończeniu timera lub ręcznym wyłączeniu karmienia:
+## 🔧 Instalacja
 
-Filtr zostaje ponownie włączony.
+1. Skopiuj plik `akwarium.yaml` do katalogu:  
+/config/blueprints/automation/gieoerzet/
 
-Timer zostaje zatrzymany / zresetowany.
+2. W Home Assistant przejdź do  
+**Ustawienia → Automatyzacje → Blueprinty → Importuj Blueprint**
+3. Wklej link:
+https://github.com/GieOeRZet/akwarium/blob/main/blueprints/automation/gieoerzet/akwarium.yaml
 
-🩺 Diagnostyka
+4. Zapisz i utwórz nową automatyzację na podstawie blueprintu.
+5. Uzupełnij wszystkie pola według swojego sprzętu i harmonogramu.
 
-Wysyła powiadomienie z aktualnymi danymi:
-listą świateł, CO₂, filtra i stanu karmienia.
+---
 
-🔄 Wyzwalacze
-Typ	Opis
-homeassistant start	Kompensacja po restarcie
-time_pattern: /1	Aktualizacja ramp co minutę
-state – feeding_switch	Obsługa karmienia
-event – timer.finished	Koniec karmienia
-🔧 Wymagane encje
-Typ	Przykładowa encja	Opis
-light	light.shelly_rgbw2_channel_1	Kanał Front (obowiązkowy)
-light	light.shelly_rgbw2_channel_2	Kanał Back (opcjonalny)
-light	light.shelly_rgbw2_channel_3	Kanał Sun (opcjonalny)
-light	light.shelly_rgbw2_channel_4	Kanał Grow (opcjonalny)
-switch	switch.co2_valve	Zawór CO₂
-switch	switch.filter	Filtr wody
-input_boolean	input_boolean.aquarium_feed	Tryb karmienia
-timer	timer.aquarium_feed_timer	Timer karmienia
-🕹️ Konfiguracja – przykładowe wartości
-Ustawienie	Front	Back	Sun	Grow
-Start rozjaśniania	15:30	15:35	15:40	15:45
-Jasność docelowa	80%	80%	70%	85%
-Czas rampy	30 min	30 min	30 min	30 min
-Start ściemniania	21:30	21:35	21:40	21:45
-Czas ściemniania	30 min	30 min	30 min	30 min
-🧠 Jak działa kompensacja ramp
+## 🧠 Wskazówki
 
-Po restarcie Home Assistant blueprint:
+- Jeśli używasz Shelly RGBW2 – podłącz każdy kanał jako osobną encję `light`.
+- Parametry ramp można ustawić różnie dla każdego kanału.
+- System automatycznie przeliczy poziom jasności po restarcie HA – nie wymaga ręcznej interwencji.
+- Nie stosuj światła nocnego – po zakończeniu rampy światło wyłączy się automatycznie.
 
-Sprawdza bieżący czas (now()).
+---
 
-Porównuje go z harmonogramem ramp (start_time, dim_time).
+## 🩺 Diagnostyka
 
-Oblicza:
+Blueprint generuje powiadomienia:
+- przy uruchomieniu HA (`system gotowy`),
+- przy rozpoczęciu i zakończeniu karmienia,
+- przy zmianach CO₂ (włączenie / wyłączenie),
+- w przypadku błędów konfiguracji.
 
-ile minut minęło od początku rampy (elapsed),
+---
 
-jaką jasność powinno mieć światło (brightness_pct).
+## 📘 Dokumentacja i aktualizacje
 
-Natychmiast ustawia odpowiednią jasność.
+🔗 Repozytorium:  
+[https://github.com/GieOeRZet/akwarium](https://github.com/GieOeRZet/akwarium)
 
-Co minutę przelicza ponownie – kontynuując rampę płynnie po restarcie.
+🗓️ Aktualna wersja: `2025.02.UI1`  
+💾 Stabilna baza: `2025.02 FINAL`  
+📄 Licencja: MIT  
 
-🧩 Tryby pracy ramp
-Faza	Działanie
-Przed start_time	Światło wyłączone
-Podczas rampy rozjaśniania	Jasność rośnie proporcjonalnie do czasu
-Między rampami	Światło świeci na pełnej jasności
-Podczas rampy ściemniania	Jasność maleje proporcjonalnie do czasu
-Po dim_end	Światło wyłączone
-🧪 Testowanie
+---
 
-Uruchom automatyzację ręcznie – sprawdź powiadomienie diagnostyczne.
+## ❤️ Podziękowania
 
-Ustaw czas rampy rozjaśniania na kilka minut i obserwuj światła.
+Dziękuję społeczności Home Assistant za inspiracje oraz testy.  
+Projekt rozwijany z pasji do akwarystyki i automatyki domowej.
 
-Zrestartuj Home Assistant w trakcie rampy → światła powinny przyjąć właściwą jasność.
-
-Po restarcie rampa powinna kontynuować się płynnie aż do końca.
-
-Sprawdź, że CO₂ i filtr reagują zgodnie z opisem.
-
-
+> „Automatyka to nie tylko wygoda – to harmonia w rytmie akwarium.” 🌿
