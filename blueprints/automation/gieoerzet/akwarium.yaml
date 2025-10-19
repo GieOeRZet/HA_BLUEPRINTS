@@ -1,7 +1,7 @@
 # =====================================================================
 # 🌊 Home Assistant Blueprint: Akwarium – Oświetlenie, CO₂ i Karmienie
 # Autor: GieOeRZet
-# Wersja: 2025.1.005
+# Wersja: 2025.02.UI1 (FINAL – odświeżony interfejs)
 # Repozytorium: https://github.com/GieOeRZet/akwarium
 # Licencja: MIT
 # =====================================================================
@@ -9,61 +9,226 @@
 blueprint:
   name: 🌊 Akwarium – Oświetlenie, CO₂ i Karmienie
   description: |
-    Kompletny blueprint do automatyzacji akwarium.
-    Obsługuje rampy oświetlenia (Shelly RGBW2), CO₂ oraz karmienie z timerem automatycznym.
-    Rampy automatycznie wznawiają się po restarcie Home Assistant i są kontynuowane co minutę.
+    Kompletny blueprint do automatyzacji akwarium w Home Assistant.
+    🐠 Steruje rampami oświetlenia (Shelly RGBW2 – 4 kanały), CO₂, filtrem i karmieniem.
+    ⚙️ Posiada pełną kompensację ramp po restarcie Home Assistant i aktualizację co minutę.
+    📘 Dokumentacja i wykresy ramp: [GitHub – GieOeRZet / akwarium](https://github.com/GieOeRZet/akwarium)
   domain: automation
   source_url: https://github.com/GieOeRZet/akwarium/blob/main/blueprints/automation/gieoerzet/akwarium.yaml
 
   input:
-    # --- Oświetlenie -------------------------------------------------
+    # ================================================================
+    # 💡 OŚWIETLENIE – FRONT
+    # ================================================================
+    header_front:
+      name: "💡 ——— Kanał 1: Front ———"
+      default: ""
+      selector: { text: {} }
+
     light_front:
-      name: 💡 Biały Front (wymagany)
+      name: 💡 Światło Front
+      description: "Główne przednie światło akwarium (kanał 1 – wymagane)."
       selector: { entity: { domain: light } }
+
+    front_start_time:
+      name: 🕒 Start rozjaśniania
+      description: "Godzina rozpoczęcia rampy rozjaśniania dla światła Front."
+      default: "15:30:00"
+      selector: { time: {} }
+
+    front_target_pct:
+      name: 🎚️ Jasność docelowa
+      description: "Docelowa jasność po zakończeniu rampy rozjaśniania (%)."
+      default: 80
+      selector: { number: { min: 0, max: 100 } }
+
+    front_ramp_minutes:
+      name: ⏱️ Czas rozjaśniania
+      description: "Długość rampy rozjaśniania (w minutach)."
+      default: 30
+      selector: { number: { min: 1, max: 240 } }
+
+    front_dim_time:
+      name: 🌙 Start ściemniania
+      description: "Godzina rozpoczęcia rampy ściemniania dla światła Front."
+      default: "21:30:00"
+      selector: { time: {} }
+
+    front_dim_minutes:
+      name: ⏱️ Czas ściemniania
+      description: "Długość rampy ściemniania (w minutach)."
+      default: 30
+      selector: { number: { min: 1, max: 240 } }
+
+    # ================================================================
+    # 💡 OŚWIETLENIE – BACK
+    # ================================================================
+    header_back:
+      name: "💡 ——— Kanał 2: Back ———"
+      default: ""
+      selector: { text: {} }
+
     light_back:
-      name: 💡 Biały Tył (opcjonalny)
+      name: 💡 Światło Tył
+      description: "Drugie światło akwarium (kanał 2 – opcjonalne)."
       default: null
       selector: { entity: { domain: light } }
+
+    back_start_time:
+      name: 🕒 Start rozjaśniania
+      description: "Godzina rozpoczęcia rampy rozjaśniania dla światła Back."
+      default: "15:30:00"
+      selector: { time: {} }
+
+    back_target_pct:
+      name: 🎚️ Jasność docelowa
+      description: "Docelowa jasność dla światła Back (%)."
+      default: 80
+      selector: { number: { min: 0, max: 100 } }
+
+    back_ramp_minutes:
+      name: ⏱️ Czas rozjaśniania
+      description: "Długość rampy rozjaśniania (minuty)."
+      default: 30
+      selector: { number: { min: 1, max: 240 } }
+
+    back_dim_time:
+      name: 🌙 Start ściemniania
+      description: "Godzina rozpoczęcia rampy ściemniania."
+      default: "21:30:00"
+      selector: { time: {} }
+
+    back_dim_minutes:
+      name: ⏱️ Czas ściemniania
+      description: "Długość rampy ściemniania (minuty)."
+      default: 30
+      selector: { number: { min: 1, max: 240 } }
+
+    # ================================================================
+    # ☀️ OŚWIETLENIE – SUN
+    # ================================================================
+    header_sun:
+      name: "☀️ ——— Kanał 3: Sun ———"
+      default: ""
+      selector: { text: {} }
+
     light_sun:
-      name: ☀️ Sun (opcjonalny)
+      name: ☀️ Światło Sun
+      description: "Trzecie światło (kanał 3 – opcjonalne, symuluje promienie słoneczne)."
       default: null
       selector: { entity: { domain: light } }
+
+    sun_start_time:
+      name: 🕒 Start rozjaśniania
+      description: "Godzina rozpoczęcia rampy rozjaśniania dla światła Sun."
+      default: "15:30:00"
+      selector: { time: {} }
+
+    sun_target_pct:
+      name: 🎚️ Jasność docelowa
+      description: "Docelowa jasność dla światła Sun (%)."
+      default: 70
+      selector: { number: { min: 0, max: 100 } }
+
+    sun_ramp_minutes:
+      name: ⏱️ Czas rozjaśniania
+      description: "Czas rampy rozjaśniania dla Sun (minuty)."
+      default: 30
+      selector: { number: { min: 1, max: 240 } }
+
+    sun_dim_time:
+      name: 🌙 Start ściemniania
+      description: "Godzina rozpoczęcia rampy ściemniania dla Sun."
+      default: "21:30:00"
+      selector: { time: {} }
+
+    sun_dim_minutes:
+      name: ⏱️ Czas ściemniania
+      description: "Czas rampy ściemniania (minuty)."
+      default: 30
+      selector: { number: { min: 1, max: 240 } }
+
+    # ================================================================
+    # 🌿 OŚWIETLENIE – GROW
+    # ================================================================
+    header_grow:
+      name: "🌿 ——— Kanał 4: Grow ———"
+      default: ""
+      selector: { text: {} }
+
     light_grow:
-      name: 🌿 Grow (opcjonalny)
+      name: 🌿 Światło Grow
+      description: "Czwarte światło (kanał 4 – opcjonalne, wspomaga wzrost roślin)."
       default: null
       selector: { entity: { domain: light } }
 
-    # --- Harmonogram ramp --------------------------------------------
-    front_start_time: { name: 🕒 Start rozjaśniania – Front, default: "15:30:00", selector: { time: {} } }
-    front_target_pct: { name: 🎚️ Jasność docelowa – Front, default: 80, selector: { number: { min: 0, max: 100 } } }
-    front_ramp_minutes: { name: ⏱️ Czas rozjaśniania – Front, default: 30, selector: { number: { min: 1, max: 240 } } }
-    front_dim_time: { name: 🌙 Start ściemniania – Front, default: "21:30:00", selector: { time: {} } }
-    front_dim_minutes: { name: ⏱️ Czas ściemniania – Front, default: 30, selector: { number: { min: 1, max: 240 } } }
+    grow_start_time:
+      name: 🕒 Start rozjaśniania
+      description: "Godzina rozpoczęcia rampy rozjaśniania dla światła Grow."
+      default: "15:30:00"
+      selector: { time: {} }
 
-    back_start_time: { name: 🕒 Start rozjaśniania – Tył, default: "15:30:00", selector: { time: {} } }
-    back_target_pct: { name: 🎚️ Jasność docelowa – Tył, default: 80, selector: { number: { min: 0, max: 100 } } }
-    back_ramp_minutes: { name: ⏱️ Czas rozjaśniania – Tył, default: 30, selector: { number: { min: 1, max: 240 } } }
-    back_dim_time: { name: 🌙 Start ściemniania – Tył, default: "21:30:00", selector: { time: {} } }
-    back_dim_minutes: { name: ⏱️ Czas ściemniania – Tył, default: 30, selector: { number: { min: 1, max: 240 } } }
+    grow_target_pct:
+      name: 🎚️ Jasność docelowa
+      description: "Docelowa jasność światła Grow (%)."
+      default: 85
+      selector: { number: { min: 0, max: 100 } }
 
-    sun_start_time: { name: 🕒 Start rozjaśniania – Sun, default: "15:30:00", selector: { time: {} } }
-    sun_target_pct: { name: 🎚️ Jasność docelowa – Sun, default: 70, selector: { number: { min: 0, max: 100 } } }
-    sun_ramp_minutes: { name: ⏱️ Czas rozjaśniania – Sun, default: 30, selector: { number: { min: 1, max: 240 } } }
-    sun_dim_time: { name: 🌙 Start ściemniania – Sun, default: "21:30:00", selector: { time: {} } }
-    sun_dim_minutes: { name: ⏱️ Czas ściemniania – Sun, default: 30, selector: { number: { min: 1, max: 240 } } }
+    grow_ramp_minutes:
+      name: ⏱️ Czas rozjaśniania
+      description: "Czas rampy rozjaśniania (minuty)."
+      default: 30
+      selector: { number: { min: 1, max: 240 } }
 
-    grow_start_time: { name: 🕒 Start rozjaśniania – Grow, default: "15:30:00", selector: { time: {} } }
-    grow_target_pct: { name: 🎚️ Jasność docelowa – Grow, default: 85, selector: { number: { min: 0, max: 100 } } }
-    grow_ramp_minutes: { name: ⏱️ Czas rozjaśniania – Grow, default: 30, selector: { number: { min: 1, max: 240 } } }
-    grow_dim_time: { name: 🌙 Start ściemniania – Grow, default: "21:30:00", selector: { time: {} } }
-    grow_dim_minutes: { name: ⏱️ Czas ściemniania – Grow, default: 30, selector: { number: { min: 1, max: 240 } } }
+    grow_dim_time:
+      name: 🌙 Start ściemniania
+      description: "Godzina rozpoczęcia rampy ściemniania dla Grow."
+      default: "21:30:00"
+      selector: { time: {} }
 
-    # --- CO₂ / Filtr / Karmienie -------------------------------------
-    co2_switch: { name: 💨 CO₂, default: null, selector: { entity: { domain: switch } } }
-    filter_switch: { name: 💧 Filtr, default: null, selector: { entity: { domain: switch } } }
-    feeding_switch: { name: 🍽️ Karmienie, default: null, selector: { entity: { domain: input_boolean } } }
-    feeding_timer: { name: ⏳ Timer karmienia, default: null, selector: { entity: { domain: timer } } }
-    feeding_duration: { name: ⏱️ Czas karmienia (min), default: 60, selector: { number: { min: 1, max: 120 } } }
+    grow_dim_minutes:
+      name: ⏱️ Czas ściemniania
+      description: "Czas rampy ściemniania (minuty)."
+      default: 30
+      selector: { number: { min: 1, max: 240 } }
+
+    # ================================================================
+    # 💨 CO₂ / 💧 FILTR / 🍽️ KARMIENIE
+    # ================================================================
+    header_other:
+      name: "⚙️ ——— Pozostałe funkcje ———"
+      default: ""
+      selector: { text: {} }
+
+    co2_switch:
+      name: 💨 CO₂
+      description: "Przełącznik zaworu CO₂ (opcjonalny). Włącza się przy starcie ramp i wyłącza 30 minut przed ściemnianiem."
+      default: null
+      selector: { entity: { domain: switch } }
+
+    filter_switch:
+      name: 💧 Filtr
+      description: "Steruje filtrem akwarium. Wyłączany automatycznie podczas karmienia."
+      default: null
+      selector: { entity: { domain: switch } }
+
+    feeding_switch:
+      name: 🍽️ Karmienie
+      description: "Przełącznik (input_boolean) uruchamiający tryb karmienia. Wyłącza filtr i startuje timer."
+      default: null
+      selector: { entity: { domain: input_boolean } }
+
+    feeding_timer:
+      name: ⏳ Timer karmienia
+      description: "Timer kontrolujący długość karmienia. Po zakończeniu włącza filtr i wyłącza karmienie."
+      default: null
+      selector: { entity: { domain: timer } }
+
+    feeding_duration:
+      name: ⏱️ Czas karmienia (min)
+      description: "Czas trwania karmienia w minutach (domyślnie 60)."
+      default: 60
+      selector: { number: { min: 1, max: 120 } }
 
 # -------------------- WYZWALACZE ------------------------------------
 trigger:
@@ -96,8 +261,8 @@ mode: restart
 # -------------------- AKCJE -----------------------------------------
 action:
   - choose:
-      # --- ⚙️ Start HA + kompensacja / aktualizacja ramp -------------
-      - conditions: "{{ trigger.platform in ['homeassistant','time_pattern'] }}"
+      # --- ⚙️ Kompensacja i rampy co minutę -------------------------
+      - conditions: "{{ trigger.platform == 'homeassistant' or trigger.platform == 'time_pattern' }}"
         sequence:
           - repeat:
               for_each:
@@ -111,11 +276,10 @@ action:
                     - variables:
                         now_ts: "{{ as_timestamp(now()) }}"
                         start_ts: "{{ as_timestamp(as_datetime(now().strftime('%Y-%m-%dT' ~ repeat.item.start))) }}"
+                        ramp_end: "{{ start_ts + repeat.item.ramp|int * 60 }}"
                         dim_ts: "{{ as_timestamp(as_datetime(now().strftime('%Y-%m-%dT' ~ repeat.item.dim))) }}"
-                        ramp_end: "{{ start_ts + (repeat.item.ramp|int * 60) }}"
-                        dim_end: "{{ dim_ts + (repeat.item.dim_ramp|int * 60) }}"
+                        dim_end: "{{ dim_ts + repeat.item.dim_ramp|int * 60 }}"
                     - choose:
-                        # FAZA ROZJAŚNIANIA
                         - conditions: "{{ start_ts <= now_ts <= ramp_end }}"
                           sequence:
                             - variables:
@@ -124,15 +288,6 @@ action:
                             - service: light.turn_on
                               target: { entity_id: "{{ repeat.item.entity }}" }
                               data: { brightness_pct: "{{ [pct, repeat.item.target]|min }}" }
-
-                        # PEŁNA JASNOŚĆ
-                        - conditions: "{{ ramp_end < now_ts < dim_ts }}"
-                          sequence:
-                            - service: light.turn_on
-                              target: { entity_id: "{{ repeat.item.entity }}" }
-                              data: { brightness_pct: "{{ repeat.item.target }}" }
-
-                        # FAZA ŚCIEMNIANIA
                         - conditions: "{{ dim_ts <= now_ts <= dim_end }}"
                           sequence:
                             - variables:
@@ -141,43 +296,12 @@ action:
                             - service: light.turn_on
                               target: { entity_id: "{{ repeat.item.entity }}" }
                               data: { brightness_pct: "{{ [pct, 0]|max }}" }
-
-                        # POZA ZAKRESEM – WYŁĄCZ
-                        - conditions: "{{ now_ts > dim_end or now_ts < start_ts }}"
+                        - conditions: "{{ now_ts < start_ts or now_ts > dim_end }}"
                           sequence:
                             - service: light.turn_off
                               target: { entity_id: "{{ repeat.item.entity }}" }
 
-      # --- 💨 CO₂ -----------------------------------------------------
-      - conditions: "{{ co2 is not none }}"
-        sequence:
-          - variables:
-              start_times:
-                - !input front_start_time
-                - !input back_start_time
-                - !input sun_start_time
-                - !input grow_start_time
-              dim_times:
-                - !input front_dim_time
-                - !input back_dim_time
-                - !input sun_dim_time
-                - !input grow_dim_time
-              earliest_start: "{{ start_times | reject('equalto', None) | min }}"
-              earliest_dim: "{{ dim_times | reject('equalto', None) | min }}"
-          - choose:
-              - conditions: "{{ trigger.now.strftime('%H:%M:%S') == earliest_start }}"
-                sequence:
-                  - service: switch.turn_on
-                    target: { entity_id: "{{ co2 }}" }
-              - conditions: >
-                  {{ trigger.now.strftime('%H:%M:%S') ==
-                     (as_datetime(now().strftime('%Y-%m-%dT' ~ earliest_dim))
-                      - timedelta(minutes=30)).strftime('%H:%M:%S') }}
-                sequence:
-                  - service: switch.turn_off
-                    target: { entity_id: "{{ co2 }}" }
-
-      # --- 🍽️ Karmienie ----------------------------------------------
+      # --- 🍽️ Karmienie ---------------------------------------------
       - conditions: "{{ feed is not none and filter is not none }}"
         sequence:
           - choose:
@@ -188,6 +312,10 @@ action:
                   - service: timer.start
                     target: { entity_id: "{{ feed_timer }}" }
                     data: { duration: "{{ (feed_duration|int * 60)|int }}" }
+                  - service: persistent_notification.create
+                    data:
+                      title: "🍽️ Rozpoczęto karmienie"
+                      message: "Filtr wyłączony na {{ feed_duration }} minut."
               - conditions: "{{ trigger.entity_id == feed and is_state(feed, 'off') }}"
                 sequence:
                   - service: switch.turn_on
@@ -200,19 +328,7 @@ action:
                     target: { entity_id: "{{ filter }}" }
                   - service: input_boolean.turn_off
                     target: { entity_id: "{{ feed }}" }
-
-      # --- 🩺 Diagnostyka ---------------------------------------------
-      - conditions: []
-        sequence:
-          - service: persistent_notification.create
-            data:
-              title: "🩺 Diagnostyka blueprintu Akwarium"
-              message: |
-                💡 Kanały: {{ [lights.front, lights.back, lights.sun, lights.grow] | select('string') | list }}
-                💨 CO₂: {{ co2 if co2 else 'brak' }}
-                💧 Filtr: {{ filter if filter else 'brak' }}
-                🍽️ Karmienie: {{ feed if feed else 'brak' }}
-
-# =====================================================================
-# KONIEC BLUEPRINTU – wersja 2025.1.005
-# =====================================================================
+                  - service: persistent_notification.create
+                    data:
+                      title: "🍽️ Karmienie zakończone (timer)"
+                      message: "Filtr ponownie włączony po zakończeniu odliczania."
