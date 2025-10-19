@@ -361,12 +361,12 @@ action:
                                       seconds: "{{ delay_s }}"
                                   # Zabezpieczenie – przerwij rozjaśnianie, jeśli zaczyna się ściemnianie
                                   - if: "{{ now().strftime('%H:%M:%S') >= repeat.item.dim_start }}"
-                                    then:
+                                    sequence:
                                       - service: persistent_notification.create
                                         data:
                                           title: "🌙 Przerwano rozjaśnianie"
                                           message: "{{ repeat.item.entity }} – rozpoczęto ściemnianie."
-                                      - break: {}
+                                      - stop: "Przerwano rampę rozjaśniania – rozpoczęto ściemnianie"
                             - service: persistent_notification.create
                               data:
                                 title: "💡 Zakończono rampę (rozjaśnianie)"
