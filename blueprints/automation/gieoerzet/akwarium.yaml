@@ -397,3 +397,45 @@ action:
                 💧 Filtr: {{ filter if filter else 'brak' }}
                 🍽️ Karmienie: {{ feed if feed else 'brak' }}
                 ⏳ Timer karmienia: {{ feed_timer if feed_timer else 'brak' }}
+
+# =====================================================================
+# 🧭 TODO – PLAN ROZWOJU: WERSJA 2025.3 BETA (CO₂ FIX RELEASE)
+# =====================================================================
+# Celem tej wersji jest zapewnienie 100% niezawodnej synchronizacji CO₂
+# z harmonogramem ramp – również po restarcie Home Assistant i reloadzie konfiguracji.
+#
+# 💨 Zmiany planowane:
+# ---------------------------------------------------------------------
+# 1️⃣ Podwójna weryfikacja po starcie HA:
+#     - CO₂ sprawdzane po 10 sekundach oraz ponownie po 60 sekundach.
+#     - Gwarantowana korekta nawet przy wolnym starcie systemu.
+#
+# 2️⃣ Analiza state.last_changed:
+#     - Jeżeli stan CO₂ nie zmienił się od czasu startu HA → wymuszenie korekty.
+#
+# 3️⃣ Obsługa reload automatyzacji (automation_reloaded):
+#     - Korekta CO₂ uruchamiana również po zwykłym przeładowaniu konfiguracji.
+#
+# 4️⃣ Zintegrowana pętla ramp + CO₂:
+#     - Weryfikacja CO₂ w tym samym przebiegu co rampy (time_pattern co minutę).
+#
+# 5️⃣ Tryb „cichy” (opcjonalny):
+#     - Powiadomienia zastąpione wpisami w logbook.
+#
+# 6️⃣ Bezpieczny fallback:
+#     - Jeśli nie można ustalić earliest_start / earliest_dim → CO₂ wyłączone awaryjnie.
+#
+# 🧠 Dodatkowe planowane usprawnienia:
+#     - Lepsza odporność na różnice czasu systemowego po restarcie.
+#     - Tryb debug (input_boolean.aquarium_debug) z logami decyzji ramp i CO₂.
+#     - Spójne nazwy powiadomień i logów.
+#
+# 📅 Harmonogram:
+#     🔹 Specyfikacja: ✅ gotowa
+#     🔹 Implementacja 2025.3 BETA1: ⏳ do wykonania
+#     🔹 Testy w HA 2025.10.x: ⏳ planowane
+#     🔹 Wersja stabilna 2025.3 STABLE: 🗓️ po testach
+#
+# 📘 Plik docelowy:
+#     blueprints/automation/gieoerzet/akwarium_2025.3_beta1.yaml
+# =====================================================================
