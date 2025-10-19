@@ -366,7 +366,7 @@ action:
                                         data:
                                           title: "🌙 Przerwano rozjaśnianie"
                                           message: "{{ repeat.item.entity }} – rozpoczęto ściemnianie."
-                                      - break
+                                      - break: {}
                             - service: persistent_notification.create
                               data:
                                 title: "💡 Zakończono rampę (rozjaśnianie)"
