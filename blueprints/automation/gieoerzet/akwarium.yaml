@@ -1,9 +1,25 @@
+# =====================================================================
+# 🌊 Home Assistant Blueprint: Akwarium – Oświetlenie, CO₂, Karmienie i Serwis
+# Autor: GieOeRZet
+# Wersja: 2025.10.19
+# Opis:
+#   Kompletny blueprint do automatyzacji akwarium.
+#   Sterowanie oświetleniem (4 kanały), CO₂, filtrem, trybem karmienia i serwisowym.
+#   Obsługuje płynne rampy jasności, automatyczne wyłączenie CO₂,
+#   tryb serwisowy z pamięcią stanu (jasność + on/off) i restart z opóźnieniem.
+#
+# Repozytorium:
+#   https://github.com/GieOeRZet/akwarium
+#
+# Licencja: MIT
+# =====================================================================
+
 blueprint:
   name: 🌊 Akwarium – Oświetlenie, CO₂, Karmienie i Serwis
   description: |
     Kompletny blueprint do automatyzacji akwarium.
-    Zawiera sterowanie oświetleniem (4 kanały), CO₂, filtrem, trybem karmienia i serwisowym.
-    Obsługuje rampy rozjaśniania/ściemniania z płynnym przejściem 1% i kontynuacją po restarcie.
+    Sterowanie oświetleniem (4 kanały), CO₂, filtrem, trybem karmienia i serwisowym.
+    Obsługuje płynne rampy rozjaśniania/ściemniania z kontynuacją po restarcie.
     Wszystkie sekcje są opcjonalne — brak encji = brak akcji.
   domain: automation
   source_url: https://github.com/GieOeRZet/akwarium/blob/main/blueprints/automation/gieoerzet/akwarium.yaml
@@ -12,58 +28,30 @@ blueprint:
     # --- Sekcja I: OŚWIETLENIE ---
     light_front:
       name: 💡 Biały Front (wymagany)
-      selector:
-        entity:
-          domain: light
+      selector: { entity: { domain: light } }
 
     light_back:
       name: 💡 Biały Tył (opcjonalny)
       default: null
-      selector:
-        entity:
-          domain: light
+      selector: { entity: { domain: light } }
 
     light_sun:
       name: ☀️ Sun (opcjonalny)
       default: null
-      selector:
-        entity:
-          domain: light
+      selector: { entity: { domain: light } }
 
     light_grow:
       name: 🌿 Grow (opcjonalny)
       default: null
-      selector:
-        entity:
-          domain: light
+      selector: { entity: { domain: light } }
 
     # --- Harmonogram kanałów ---
-    front_start_time:
-      name: 🕒 Start rozjaśniania – Front
-      default: "15:30:00"
-      selector: { time: {} }
+    front_start_time: { name: 🕒 Start rozjaśniania – Front, default: "15:30:00", selector: { time: {} } }
+    front_target_pct: { name: 🎚️ Jasność docelowa – Front (%), default: 80, selector: { number: { min: 0, max: 100 } } }
+    front_ramp_minutes: { name: ⏱️ Czas rozjaśniania – Front (min), default: 30, selector: { number: { min: 1, max: 240 } } }
+    front_dim_time: { name: 🌙 Start ściemniania – Front, default: "21:30:00", selector: { time: {} } }
+    front_dim_minutes: { name: ⏱️ Czas ściemniania – Front (min), default: 30, selector: { number: { min: 1, max: 240 } } }
 
-    front_target_pct:
-      name: 🎚️ Jasność docelowa – Front (%)
-      default: 80
-      selector: { number: { min: 0, max: 100 } }
-
-    front_ramp_minutes:
-      name: ⏱️ Czas rozjaśniania – Front (min)
-      default: 30
-      selector: { number: { min: 1, max: 240 } }
-
-    front_dim_time:
-      name: 🌙 Start ściemniania – Front
-      default: "21:30:00"
-      selector: { time: {} }
-
-    front_dim_minutes:
-      name: ⏱️ Czas ściemniania – Front (min)
-      default: 30
-      selector: { number: { min: 1, max: 240 } }
-
-    # --- Dla pozostałych kanałów ---
     back_start_time: { name: 🕒 Start rozjaśniania – Tył, default: "15:30:00", selector: { time: {} } }
     back_target_pct: { name: 🎚️ Jasność docelowa – Tył (%), default: 80, selector: { number: { min: 0, max: 100 } } }
     back_ramp_minutes: { name: ⏱️ Czas rozjaśniania – Tył (min), default: 30, selector: { number: { min: 1, max: 240 } } }
@@ -83,87 +71,34 @@ blueprint:
     grow_dim_minutes: { name: ⏱️ Czas ściemniania – Grow (min), default: 30, selector: { number: { min: 1, max: 240 } } }
 
     # --- Sekcja II: CO₂ i filtr ---
-    co2_switch:
-      name: 💨 Przełącznik CO₂ (opcjonalny)
-      default: null
-      selector:
-        entity: { domain: switch }
-
-    filter_switch:
-      name: 💧 Przełącznik Filtra (opcjonalny)
-      default: null
-      selector:
-        entity: { domain: switch }
+    co2_switch: { name: 💨 Przełącznik CO₂ (opcjonalny), default: null, selector: { entity: { domain: switch } } }
+    filter_switch: { name: 💧 Przełącznik Filtra (opcjonalny), default: null, selector: { entity: { domain: switch } } }
 
     # --- Sekcja III: Karmienie i Serwis ---
-    feeding_switch:
-      name: 🍽️ Przełącznik Karmienia (opcjonalny)
-      default: null
-      selector:
-        entity: { domain: input_boolean }
+    feeding_switch: { name: 🍽️ Przełącznik Karmienia (opcjonalny), default: null, selector: { entity: { domain: input_boolean } } }
+    feeding_timer: { name: ⏳ Timer Karmienia (opcjonalny), default: null, selector: { entity: { domain: timer } } }
+    feeding_duration: { name: ⏱️ Czas Karmienia (min), default: 60, selector: { number: { min: 1, max: 120 } } }
+    service_switch: { name: 🔧 Tryb Serwisowy (opcjonalny), default: null, selector: { entity: { domain: input_boolean } } }
+    memory_text: { name: 💾 Pamięć Stanu (opcjonalny), default: null, selector: { entity: { domain: input_text } } }
 
-    feeding_timer:
-      name: ⏳ Timer Karmienia (opcjonalny)
-      default: null
-      selector:
-        entity: { domain: timer }
-
-    feeding_duration:
-      name: ⏱️ Czas Karmienia (min)
-      default: 60
-      selector:
-        number: { min: 1, max: 120 }
-
-    service_switch:
-      name: 🔧 Tryb Serwisowy (opcjonalny)
-      default: null
-      selector:
-        entity: { domain: input_boolean }
-
-    memory_text:
-      name: 💾 Pamięć Stanu (opcjonalny)
-      default: null
-      selector:
-        entity: { domain: input_text }
-
-# =========================
-# WYZWALACZE
-# =========================
 trigger:
-  - platform: time
-    at:
-      - !input front_start_time
-      - !input front_dim_time
-      - !input back_start_time
-      - !input back_dim_time
-      - !input sun_start_time
-      - !input sun_dim_time
-      - !input grow_start_time
-      - !input grow_dim_time
-
   - platform: homeassistant
     event: start
-
   - platform: state
     entity_id:
       - !input feeding_switch
       - !input service_switch
-
   - platform: event
     event_type: timer.finished
     event_data:
       entity_id: !input feeding_timer
 
-# =========================
-# ZMIENNE
-# =========================
 variables:
   lights:
     front: !input light_front
     back: !input light_back
     sun: !input light_sun
     grow: !input light_grow
-  co2: !input co2_switch
   filter: !input filter_switch
   feed: !input feeding_switch
   feed_timer: !input feeding_timer
@@ -173,245 +108,57 @@ variables:
 
 mode: restart
 
-# =========================
-# AKCJE
-# =========================
 action:
   - choose:
-      # === Restart Home Assistanta ===
+      # --- ⏱️ Restart HA ---
       - conditions: "{{ trigger.platform == 'homeassistant' }}"
         sequence:
           - delay: "00:00:10"
           - service: persistent_notification.create
             data:
               title: "⚙️ Blueprint Akwarium uruchomiony"
-              message: "Home Assistant w pełni załadowany – oczekiwanie na zdarzenia."
+              message: "Home Assistant gotowy – automatyzacje wznowione."
 
-      # === Rampa jasności ===
-      - conditions: "{{ trigger.platform == 'time' }}"
-        sequence:
-          - repeat:
-              for_each:
-                - { entity: !input light_front, start: !input front_start_time, target: !input front_target_pct, ramp: !input front_ramp_minutes, dim_start: !input front_dim_time, dim_ramp: !input front_dim_minutes }
-                - { entity: !input light_back, start: !input back_start_time, target: !input back_target_pct, ramp: !input back_ramp_minutes, dim_start: !input back_dim_time, dim_ramp: !input back_dim_minutes }
-                - { entity: !input light_sun, start: !input sun_start_time, target: !input sun_target_pct, ramp: !input sun_ramp_minutes, dim_start: !input sun_dim_time, dim_ramp: !input sun_dim_minutes }
-                - { entity: !input light_grow, start: !input grow_start_time, target: !input grow_target_pct, ramp: !input grow_ramp_minutes, dim_start: !input grow_dim_time, dim_ramp: !input grow_dim_minutes }
-              sequence:
-                - if: "{{ repeat.item.entity != None }}"
-                  sequence:
-                    - choose:
-                        # --- Rozjaśnianie ---
-                        - conditions: "{{ trigger.now == repeat.item.start }}"
-                          sequence:
-                            - service: persistent_notification.create
-                              data:
-                                title: "💡 Rozpoczęto rampę (rozjaśnianie)"
-                                message: "{{ repeat.item.entity }} – do {{ repeat.item.target }}% w {{ repeat.item.ramp }} min."
-                            - variables:
-                                delay_s: "{{ (repeat.item.ramp|int * 60 / (repeat.item.target|int if repeat.item.target|int > 0 else 1)) | int }}"
-                            - repeat:
-                                while: >
-                                  {{ repeat.index <= repeat.item.target|int and now().strftime('%H:%M:%S') < repeat.item.dim_start }}
-                                sequence:
-                                  - service: light.turn_on
-                                    target:
-                                      entity_id: "{{ repeat.item.entity }}"
-                                    data:
-                                      brightness_step_pct: 1
-                                  - delay:
-                                      seconds: "{{ delay_s }}"
-                            - service: persistent_notification.create
-                              data:
-                                title: "💡 Zakończono rampę (rozjaśnianie)"
-                                message: "{{ repeat.item.entity }} osiągnęło {{ repeat.item.target }}%."
-                        # --- Ściemnianie ---
-                        - conditions: "{{ trigger.now == repeat.item.dim_start }}"
-                          sequence:
-                            - service: persistent_notification.create
-                              data:
-                                title: "🌙 Rozpoczęto rampę (ściemnianie)"
-                                message: "{{ repeat.item.entity }} – do 0% w {{ repeat.item.dim_ramp }} min."
-                            - variables:
-                                delay_s: "{{ (repeat.item.dim_ramp|int * 60 / (repeat.item.target|int if repeat.item.target|int > 0 else 1)) | int }}"
-                            - repeat:
-                                count: "{{ repeat.item.target|int }}"
-                                sequence:
-                                  - service: light.turn_on
-                                    target:
-                                      entity_id: "{{ repeat.item.entity }}"
-                                    data:
-                                      brightness_step_pct: -1
-                                  - delay:
-                                      seconds: "{{ delay_s }}"
-                            - service: light.turn_off
-                              target:
-                                entity_id: "{{ repeat.item.entity }}"
-                            - service: persistent_notification.create
-                              data:
-                                title: "🌙 Zakończono rampę (ściemnianie)"
-                                message: "{{ repeat.item.entity }} wyłączone."
-
-      # ==========================================
-      # 💨 Sekcja CO₂ – uruchamianie i wyłączanie wg rampy
-      # ==========================================
-      - conditions: "{{ co2 is not none }}"
-        sequence:
-          # Wyznacz najwcześniejszy czas rozjaśniania i ściemniania
-          - variables:
-              start_times:
-                - !input front_start_time
-                - !input back_start_time
-                - !input sun_start_time
-                - !input grow_start_time
-              dim_times:
-                - !input front_dim_time
-                - !input back_dim_time
-                - !input sun_dim_time
-                - !input grow_dim_time
-              earliest_start: "{{ start_times | reject('equalto', None) | min }}"
-              earliest_dim: "{{ dim_times | reject('equalto', None) | min }}"
-          # --- Włącz CO₂ o najwcześniejszej godzinie rampy ---
-          - choose:
-              - conditions: "{{ trigger.now == earliest_start }}"
-                sequence:
-                  - service: switch.turn_on
-                    target: { entity_id: "{{ co2 }}" }
-                  - service: persistent_notification.create
-                    data:
-                      title: "💨 CO₂ włączone"
-                      message: "Aktywacja CO₂ o {{ earliest_start }}"
-              # --- Wyłącz CO₂ 30 minut przed najwcześniejszym ściemnianiem ---
-              - conditions: "{{ trigger.now == (earliest_dim | as_datetime | as_local - timedelta(minutes=30)) }}"
-                sequence:
-                  - service: switch.turn_off
-                    target: { entity_id: "{{ co2 }}" }
-                  - service: persistent_notification.create
-                    data:
-                      title: "💨 CO₂ wyłączone"
-                      message: "Wyłączenie 30 minut przed ściemnianiem ({{ earliest_dim }})"
-
-      # ==========================================
-      # 🍽️ Sekcja Karmienia – sterowanie filtrem i timerem
-      # ==========================================
-      - conditions: "{{ feed is not none and filter is not none }}"
+      # --- 🍽️ Tryb karmienia ---
+      - conditions:
+          - "{{ feed is not none }}"
+          - condition: template
+            value_template: "{{ trigger.entity_id == feed }}"
         sequence:
           - choose:
-              # --- Rozpoczęcie karmienia ---
-              - conditions: "{{ trigger.entity_id == feed and is_state(feed, 'on') }}"
+              - conditions:
+                  - condition: state
+                    entity_id: !input feeding_switch
+                    state: "on"
                 sequence:
-                  - service: switch.turn_off
-                    target: { entity_id: "{{ filter }}" }
-                  - service: timer.start
-                    target: { entity_id: "{{ feed_timer }}" }
-                    data:
-                      duration: "{{ (feed_duration|int * 60)|int }}"
                   - service: persistent_notification.create
                     data:
-                      title: "🍽️ Rozpoczęto karmienie"
+                      title: "🍽️ Tryb karmienia aktywny"
                       message: "Filtr wyłączony na {{ feed_duration }} minut."
-              # --- Zakończenie karmienia (ręczne wyłączenie) ---
-              - conditions: "{{ trigger.entity_id == feed and is_state(feed, 'off') }}"
+                  - if: "{{ filter is not none }}"
+                    then:
+                      - service: switch.turn_off
+                        target: { entity_id: "{{ filter }}" }
+                  - if: "{{ feed_timer is not none }}"
+                    then:
+                      - service: timer.start
+                        target: { entity_id: "{{ feed_timer }}" }
+                        data: { duration: "{{ (feed_duration|int * 60)|int }}" }
+
+              - conditions:
+                  - condition: state
+                    entity_id: !input feeding_switch
+                    state: "off"
                 sequence:
-                  - service: switch.turn_on
-                    target: { entity_id: "{{ filter }}" }
-                  - service: timer.cancel
-                    target: { entity_id: "{{ feed_timer }}" }
+                  - if: "{{ filter is not none }}"
+                    then:
+                      - service: switch.turn_on
+                        target: { entity_id: "{{ filter }}" }
+                  - if: "{{ feed_timer is not none }}"
+                    then:
+                      - service: timer.cancel
+                        target: { entity_id: "{{ feed_timer }}" }
                   - service: persistent_notification.create
                     data:
                       title: "🍽️ Karmienie zakończone"
-                      message: "Filtr włączony, timer zatrzymany."
-              # --- Zakończenie karmienia po odliczaniu timera ---
-              - conditions: "{{ trigger.event_type == 'timer.finished' }}"
-                sequence:
-                  - service: switch.turn_on
-                    target: { entity_id: "{{ filter }}" }
-                  - service: input_boolean.turn_off
-                    target: { entity_id: "{{ feed }}" }
-                  - service: persistent_notification.create
-                    data:
-                      title: "🍽️ Karmienie zakończone (timer)"
-                      message: "Filtr ponownie włączony po zakończeniu odliczania."
-
-      # ==========================================
-      # 🔧 Sekcja Serwis – zapamiętywanie i przywracanie stanu
-      # ==========================================
-      - conditions: "{{ service is not none and memory is not none }}"
-        sequence:
-          - choose:
-              # --- Aktywacja trybu serwisowego ---
-              - conditions: "{{ trigger.entity_id == service and is_state(service, 'on') }}"
-                sequence:
-                  # Zapisz aktualne stany świateł i filtra w pomocniku input_text
-                  - variables:
-                      saved_state: |
-                        {% set data = namespace(states={}) %}
-                        {% if filter is not none %}
-                        {% set data.states = data.states | combine({filter: states(filter)}) %}
-                        {% endif %}
-                        {% for l in [lights.front, lights.back, lights.sun, lights.grow] if l is not none %}
-                        {% set data.states = data.states | combine({l: states(l)}) %}
-                        {% endfor %}
-                        {{ data.states | tojson }}
-                  - service: input_text.set_value
-                    target: { entity_id: "{{ memory }}" }
-                    data: { value: "{{ saved_state }}" }
-                  - service: persistent_notification.create
-                    data:
-                      title: "🔧 Tryb serwisowy aktywowany"
-                      message: "Zapisano stan, światła ustawione na 90%, filtr wyłączony."
-                  # Ustaw wszystkie światła na 90% i wyłącz filtr
-                  - repeat:
-                      for_each: "{{ [lights.front, lights.back, lights.sun, lights.grow] | select('string') }}"
-                      sequence:
-                        - if: "{{ repeat.item != None }}"
-                          sequence:
-                            - service: light.turn_on
-                              target: { entity_id: "{{ repeat.item }}" }
-                              data: { brightness_pct: 90 }
-                  - if: "{{ filter is not none }}"
-                    sequence:
-                      - service: switch.turn_off
-                        target: { entity_id: "{{ filter }}" }
-
-              # --- Wyłączenie trybu serwisowego ---
-              - conditions: "{{ trigger.entity_id == service and is_state(service, 'off') }}"
-                sequence:
-                  - variables:
-                      state_data: "{{ states(memory) }}"
-                  - choose:
-                      - conditions: "{{ state_data != '' }}"
-                        sequence:
-                          - variables:
-                              parsed: "{{ state_data | from_json }}"
-                          - repeat:
-                              for_each: "{{ parsed.keys() }}"
-                              sequence:
-                                - variables:
-                                    e: "{{ repeat.item }}"
-                                    val: "{{ parsed[e] }}"
-                                - choose:
-                                    - conditions: "{{ e.startswith('light.') }}"
-                                      sequence:
-                                        - service: "light.turn_{{ 'on' if val == 'on' else 'off' }}"
-                                          target: { entity_id: "{{ e }}" }
-                                    - conditions: "{{ e.startswith('switch.') }}"
-                                      sequence:
-                                        - service: "switch.turn_{{ 'on' if val == 'on' else 'off' }}"
-                                          target: { entity_id: "{{ e }}" }
-                          - service: persistent_notification.create
-                            data:
-                              title: "🔧 Tryb serwisowy zakończony"
-                              message: "Przywrócono poprzedni stan świateł i filtra."
-
-      # ==========================================
-      # 🩺 Sekcja diagnostyczna – informacje pomocnicze
-      # ==========================================
-      - service: persistent_notification.create
-        data:
-          title: "🩺 Diagnostyka blueprintu Akwarium"
-          message: |
-            💡 Kanały aktywne: {{ [lights.front, lights.back, lights.sun, lights.grow] | select('string') | list }}
-            💨 CO₂: {{ co2 if co2 else 'brak' }}
-            💧 Filtr: {{ filter if filter else 'brak' }}
-            🍽️ Karmienie: {{ feed if feed else 'brak' }}
-            🔧 Serwis: {{ service if service else 'brak' }}
+                      message: "Filtr ponownie włączony."
