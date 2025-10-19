@@ -332,3 +332,68 @@ action:
                     data:
                       title: "🍽️ Karmienie zakończone (timer)"
                       message: "Filtr ponownie włączony po zakończeniu odliczania."
+
+      # --- 💨 CO₂ wg ramp (±1 min, korekcja stanu + po restarcie) ---
+      - conditions: "{{ co2 is not none }}"
+        sequence:
+          - variables:
+              start_times:
+                - !input front_start_time
+                - !input back_start_time
+                - !input sun_start_time
+                - !input grow_start_time
+              dim_times:
+                - !input front_dim_time
+                - !input back_dim_time
+                - !input sun_dim_time
+                - !input grow_dim_time
+              earliest_start: "{{ start_times | reject('equalto', None) | min }}"
+              earliest_dim: "{{ dim_times | reject('equalto', None) | min }}"
+              now_t: "{{ as_timestamp(now()) }}"
+              start_t: "{{ as_timestamp(as_datetime(now().strftime('%Y-%m-%dT' ~ earliest_start))) }}"
+              off_t: "{{ as_timestamp(as_datetime(now().strftime('%Y-%m-%dT' ~ earliest_dim)) - timedelta(minutes=30)) }}"
+              should_be_on: "{{ now_t >= start_t and now_t < off_t }}"
+              is_on: "{{ is_state(co2, 'on') }}"
+          - choose:
+
+              # --- Włączenie CO₂ (okno ±1 min + korekcja stanu + po starcie) ---
+              - conditions: >
+                  {{ trigger.platform in ['homeassistant','time_pattern'] and
+                     ((now_t >= (start_t - 60) and now_t <= (start_t + 60)) or (should_be_on and not is_on)) }}
+                sequence:
+                  - service: switch.turn_on
+                    target: { entity_id: "{{ co2 }}" }
+                  - service: persistent_notification.create
+                    data:
+                      title: "💨 CO₂ włączone"
+                      message: >
+                        CO₂ aktywowane o {{ earliest_start }}.
+                        (dokładność ±1 minuty, korekcja stanu: {{ 'tak' if not is_on else 'nie' }})
+
+              # --- Wyłączenie CO₂ (okno ±1 min + korekcja stanu + po starcie) ---
+              - conditions: >
+                  {{ trigger.platform in ['homeassistant','time_pattern'] and
+                     ((now_t >= (off_t - 60) and now_t <= (off_t + 60)) or (not should_be_on and is_on)) }}
+                sequence:
+                  - service: switch.turn_off
+                    target: { entity_id: "{{ co2 }}" }
+                  - service: persistent_notification.create
+                    data:
+                      title: "💨 CO₂ wyłączone"
+                      message: >
+                        CO₂ wyłączone 30 min przed ściemnianiem ({{ earliest_dim }}).
+                        (dokładność ±1 minuty, korekcja stanu: {{ 'tak' if is_on else 'nie' }})
+
+
+      # --- 🩺 Diagnostyka blueprintu ----------------------------------
+      - conditions: []
+        sequence:
+          - service: persistent_notification.create
+            data:
+              title: "🩺 Diagnostyka blueprintu Akwarium"
+              message: |
+                💡 Kanały aktywne: {{ [lights.front, lights.back, lights.sun, lights.grow] | select('string') | list }}
+                💨 CO₂: {{ co2 if co2 else 'brak' }}
+                💧 Filtr: {{ filter if filter else 'brak' }}
+                🍽️ Karmienie: {{ feed if feed else 'brak' }}
+                ⏳ Timer karmienia: {{ feed_timer if feed_timer else 'brak' }}
