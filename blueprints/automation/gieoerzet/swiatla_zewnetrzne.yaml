@@ -157,7 +157,7 @@ actions:
           - condition: trigger
             id: PodbitkaBRAMA
           - condition: state
-            target: !input podbitka_all
+            entity_id: !input podbitka_all
             state: "off"
           - condition: or
             conditions:
