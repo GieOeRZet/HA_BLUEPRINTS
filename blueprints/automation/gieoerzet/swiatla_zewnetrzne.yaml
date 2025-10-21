@@ -1,112 +1,88 @@
 blueprint:
-  name: 💡 Podbitka + Podjazd – Automatyczne światła (Brama + Drzwi)
+  name: 💡 Podbitka – Automatyczne światła (pełny cykl dobowy)
   description: >
     Kompleksowa automatyzacja oświetlenia zewnętrznego:
-    - Podbitka włącza się po zmierzchu i wyłącza o 22:00 etapami
-    - Rano o 6:00 włącza się, jeśli nadal ciemno
-    - Wyłącza się przy pełnym dniu
-    - Osobne światła i czas świecenia po otwarciu bramy lub drzwi
-    - Licznik czasu resetuje się przy ponownym otwarciu bramy lub drzwi
-    - Pomija działanie, gdy input_boolean.swieta = ON
+    - Wieczorem zapala podbitkę (rogi + środki), gasi etapami o ustalonych godzinach.
+    - Rano ponownie zapala podbitkę, jeśli jeszcze ciemno.
+    - Reaguje na otwarcie bramy i drzwi (osobne czasy świecenia).
+    - Automatycznie blokuje reakcje dzienne.
+    - Tryb „Święta” dezaktywuje automatyzacje podbitki.
+    - Wszystkie czasy i encje konfigurowalne z GUI.
 
   domain: automation
-  source_url: "https://raw.githubusercontent.com/GieOeRZet/akwarium/main/blueprints/automation/gieoerzet/swiatla_zewnetrzne.yaml"
+  source_url: "https://raw.githubusercontent.com/GieOeRZet/HA_BLUEPRINTS/main/blueprints/automation/gieoerzet/swiatla_zewnetrzne.yaml"
 
   input:
-    podbitka_all:
-      name: 💡 Światła podbitki – całość
-      description: Główna grupa lub światła do włączania/wyłączania całości.
+    czujnik_dnia:
+      name: 🌅 Sensor okresu dnia
+      description: Sensor określający porę dnia (np. sensor.period_of_day)
+      selector:
+        entity:
+          domain: sensor
+
+    podbitka_rogi:
+      name: 💡 Światła podbitki – rogi
+      description: Światła rogowe podbitki.
       selector:
         entity:
           domain: light
 
     podbitka_srodki:
-      name: 💡 Światła – środki
-      description: Światła środkowe do wyłączenia o 22:00.
+      name: 💡 Światła podbitki – środki
+      description: Światła środkowe podbitki.
       selector:
         entity:
           domain: light
 
-    podbitka_rogi:
-      name: 💡 Światła – rogi
-      description: Światła rogowe do wyłączenia 30 minut po 22:00.
+    podjazd:
+      name: 🚗 Światła podjazdu
+      description: Oświetlenie podjazdu.
       selector:
         entity:
           domain: light
-
-    podjazd_swiatlo:
-      name: 🚗 Światło podjazdu
-      description: Oświetlenie podjazdu lub ścieżki – może być użyte przy bramie lub drzwiach.
-      selector:
-        entity:
-          domain: light
-
-    czujnik_drzwi:
-      name: 🚪 Czujnik drzwi wejściowych
-      description: Sensor otwarcia drzwi wejściowych (binary_sensor).
-      selector:
-        entity:
-          domain: binary_sensor
 
     brama:
-      name: 🚧 Brama wjazdowa
-      description: Encja bramy (cover), która uruchamia światła po otwarciu.
+      name: 🚪 Brama wjazdowa
+      description: Encja bramy (cover), która wyzwala światła przy otwarciu.
       selector:
         entity:
           domain: cover
 
-    czujnik_dnia:
-      name: 🌅 Sensor okresu dnia
-      description: Sensor np. sensor.period_of_day z wartościami daylight / nightlight / dawnlight / dusklight.
+    drzwi:
+      name: 🚪 Drzwi wejściowe
+      description: Czujnik drzwi (binary_sensor), który wyzwala światła przy otwarciu.
       selector:
         entity:
-          domain: sensor
+          domain: binary_sensor
 
     swieta:
       name: 🎄 Przełącznik „Święta”
-      description: Nie uruchamiaj automatyzacji, jeśli włączony.
+      description: Jeśli włączony, automatyzacja podbitki jest nieaktywna.
       selector:
         entity:
           domain: input_boolean
 
-    godzina_off:
-      name: 🕙 Godzina wyłączenia wieczorem
+    # --- Parametry czasowe ---
+    godzina_podbitka_srodki_off:
+      name: 🕙 Godzina wyłączenia świateł podbitki – środki
       default: "22:00:00"
       selector:
         time: {}
 
-    godzina_rano:
-      name: 🌅 Godzina włączenia rano
+    godzina_podbitka_rogi_off:
+      name: 🕥 Godzina wyłączenia świateł podbitki – rogi
+      default: "22:30:00"
+      selector:
+        time: {}
+
+    godzina_podbitka_rano:
+      name: 🌅 Godzina aktywacji podbitki rano
       default: "06:00:00"
       selector:
         time: {}
 
-    # --- NOWE INPUTY (z podpowiedziami) ---
-    swiatla_bramy:
-      name: 💡 Światła zapalane po otwarciu bramy
-      description: >
-        Wybierz spośród wcześniej dodanych świateł (np. podbitka, podjazd),
-        które mają się zapalać przy otwieraniu bramy.
-      default: !input podbitka_all
-      selector:
-        target:
-          entity:
-            domain: light
-
-    swiatla_drzwi:
-      name: 💡 Światła zapalane po otwarciu drzwi
-      description: >
-        Wybierz spośród wcześniej dodanych świateł (np. podjazd),
-        które mają się zapalać przy otwieraniu drzwi wejściowych.
-      default: !input podjazd_swiatlo
-      selector:
-        target:
-          entity:
-            domain: light
-
-    czas_bramy:
-      name: ⏱️ Czas świecenia po otwarciu bramy (min)
-      description: Po ilu minutach wyłączyć światła zapalone przez bramę.
+    czas_swiecenia_podbitki:
+      name: ⏱️ Czas świecenia świateł podbitki (min)
       default: 5
       selector:
         number:
@@ -115,9 +91,8 @@ blueprint:
           unit_of_measurement: min
           mode: slider
 
-    czas_drzwi:
-      name: ⏱️ Czas świecenia po otwarciu drzwi (min)
-      description: Po ilu minutach wyłączyć światła zapalone przez drzwi.
+    czas_swiecenia_podjazdu:
+      name: ⏱️ Czas świecenia świateł podjazdu (min)
       default: 5
       selector:
         number:
@@ -126,134 +101,241 @@ blueprint:
           unit_of_measurement: min
           mode: slider
 
-mode: restart
+mode: parallel
 
 triggers:
+  # Wieczór → włączenie podbitki
   - platform: state
     entity_id: !input czujnik_dnia
     from: daylight
     id: PodbitkaON
 
+  # Poranek → zmiana nightlight
   - platform: state
     entity_id: !input czujnik_dnia
-    to: daylight
-    id: PodbitkaDaylightOFF
+    from: nightlight
+    id: PodbitkaNightToDawn
 
+  # Godzina 6:00 → alternatywna aktywacja rano
   - platform: time
-    at: !input godzina_off
-    id: PodbitkaOFF
-
-  - platform: time
-    at: !input godzina_rano
+    at: !input godzina_podbitka_rano
     id: PodbitkaRANO
 
+  # Otwarcie bramy
   - platform: state
     entity_id: !input brama
     to: opening
     id: BramaOPEN
 
+  # Otwarcie drzwi
   - platform: state
-    entity_id: !input czujnik_drzwi
+    entity_id: !input drzwi
     to: "on"
     id: DrzwiOPEN
 
-conditions:
-  - condition: state
+  # Blokada dzienna (świt)
+  - platform: state
+    entity_id: !input czujnik_dnia
+    from: dawnlight
+    to: daylight
+    id: BlokadaDziennaON
+
+  # Odblokowanie wieczorem
+  - platform: state
+    entity_id: !input czujnik_dnia
+    from: daylight
+    to: dusklight
+    id: BlokadaDziennaOFF
+
+  # Tryb świąteczny
+  - platform: state
     entity_id: !input swieta
-    state: "off"
+    to: "on"
+    id: SwietaON
+
+  - platform: state
+    entity_id: !input swieta
+    to: "off"
+    id: SwietaOFF
 
 actions:
   - choose:
-      # ---- WIECZOREM po zmierzchu ----
+
+      # 🟢 TRYB: PODBITKA WIECZOREM
       - conditions:
           - condition: trigger
             id: PodbitkaON
+          - condition: template
+            value_template: "{{ not (tryb_swieta_aktywny | default(false)) }}"
         sequence:
           - service: light.turn_on
             target:
-              entity_id: !input podbitka_all
-
-      # ---- O 22:00 – wyłączenie etapowe ----
-      - conditions:
-          - condition: trigger
-            id: PodbitkaOFF
-        sequence:
+              entity_id:
+                - !input podbitka_rogi
+                - !input podbitka_srodki
+          - variables:
+              tryb_podbitka_aktywny: true
+          - wait_for_trigger:
+              - platform: time
+                at: !input godzina_podbitka_srodki_off
+            continue_on_timeout: true
           - service: light.turn_off
             target:
               entity_id: !input podbitka_srodki
-          - delay: "00:30:00"
+          - wait_for_trigger:
+              - platform: time
+                at: !input godzina_podbitka_rogi_off
+            continue_on_timeout: true
           - service: light.turn_off
             target:
               entity_id: !input podbitka_rogi
+          - variables:
+              tryb_podbitka_aktywny: false
 
-      # ---- RANO o 6:00 (jeśli ciemno) ----
+      # 🟢 TRYB: PODBITKA RANO
       - conditions:
-          - condition: trigger
-            id: PodbitkaRANO
           - condition: or
             conditions:
-              - condition: state
-                entity_id: !input czujnik_dnia
-                state: nightlight
-              - condition: state
-                entity_id: !input czujnik_dnia
-                state: dawnlight
+              - condition: trigger
+                id: PodbitkaRANO
+              - condition: trigger
+                id: PodbitkaNightToDawn
+          - condition: template
+            value_template: "{{ not (tryb_swieta_aktywny | default(false)) }}"
         sequence:
           - service: light.turn_on
             target:
-              entity_id: !input podbitka_all
-
-      # ---- WYŁĄCZ przy pełnym dniu ----
-      - conditions:
-          - condition: trigger
-            id: PodbitkaDaylightOFF
-        sequence:
+              entity_id:
+                - !input podbitka_rogi
+                - !input podbitka_srodki
+          - variables:
+              tryb_podbitka_aktywny: true
+          - wait_for_trigger:
+              - platform: state
+                entity_id: !input czujnik_dnia
+                to: dawnlight
+            continue_on_timeout: true
           - service: light.turn_off
             target:
-              entity_id: !input podbitka_all
+              entity_id:
+                - !input podbitka_rogi
+                - !input podbitka_srodki
+          - variables:
+              tryb_podbitka_aktywny: false
 
-      # ---- OTWARCIE BRAMY (nocą) ----
+      # 🟢 TRYB: PODJAZD PO BRAMIE
       - conditions:
           - condition: trigger
             id: BramaOPEN
+          - condition: template
+            value_template: "{{ not (tryb_podbitka_dzienny | default(false)) }}"
           - condition: or
             conditions:
+              - condition: state
+                entity_id: !input czujnik_dnia
+                state: dusklight
               - condition: state
                 entity_id: !input czujnik_dnia
                 state: nightlight
               - condition: state
                 entity_id: !input czujnik_dnia
                 state: dawnlight
-              - condition: state
-                entity_id: !input czujnik_dnia
-                state: dusklight
         sequence:
           - service: light.turn_on
-            target: !input swiatla_bramy
+            target:
+              entity_id: !input podjazd
           - delay:
-              minutes: !input czas_bramy
+              minutes: !input czas_swiecenia_podjazdu
           - service: light.turn_off
-            target: !input swiatla_bramy
+            target:
+              entity_id: !input podjazd
 
-      # ---- OTWARCIE DRZWI (nocą) ----
+      # 🟢 TRYB: PODBITKA PO BRAMIE
+      - conditions:
+          - condition: trigger
+            id: BramaOPEN
+          - condition: template
+            value_template: "{{ not (tryb_swieta_aktywny | default(false)) and not (tryb_podbitka_dzienny | default(false)) and not (tryb_podbitka_aktywny | default(false)) }}"
+        sequence:
+          - delay: "00:00:30"
+          - service: light.turn_on
+            target:
+              entity_id:
+                - !input podbitka_rogi
+                - !input podbitka_srodki
+          - delay:
+              minutes: !input czas_swiecenia_podbitki
+          - service: light.turn_off
+            target:
+              entity_id:
+                - !input podbitka_rogi
+                - !input podbitka_srodki
+
+      # 🟢 TRYB: PODBITKA PO DRZWIACH
       - conditions:
           - condition: trigger
             id: DrzwiOPEN
-          - condition: or
-            conditions:
-              - condition: state
-                entity_id: !input czujnik_dnia
-                state: nightlight
-              - condition: state
-                entity_id: !input czujnik_dnia
-                state: dawnlight
-              - condition: state
-                entity_id: !input czujnik_dnia
-                state: dusklight
+          - condition: template
+            value_template: "{{ not (tryb_swieta_aktywny | default(false)) and not (tryb_podbitka_dzienny | default(false)) and not (tryb_podbitka_aktywny | default(false)) }}"
         sequence:
           - service: light.turn_on
-            target: !input swiatla_drzwi
+            target:
+              entity_id:
+                - !input podbitka_rogi
+                - !input podbitka_srodki
           - delay:
-              minutes: !input czas_drzwi
+              minutes: !input czas_swiecenia_podbitki
           - service: light.turn_off
-            target: !input swiatla_drzwi
+            target:
+              entity_id:
+                - !input podbitka_rogi
+                - !input podbitka_srodki
+
+      # 🟢 TRYB: PODJAZD PO DRZWIACH
+      - conditions:
+          - condition: trigger
+            id: DrzwiOPEN
+          - condition: template
+            value_template: "{{ not (tryb_podbitka_dzienny | default(false)) }}"
+        sequence:
+          - delay: "00:00:30"
+          - service: light.turn_on
+            target:
+              entity_id: !input podjazd
+          - delay:
+              minutes: !input czas_swiecenia_podjazdu
+          - service: light.turn_off
+            target:
+              entity_id: !input podjazd
+
+      # 🟢 BLOKADA DZIENNA – ŚWIT → DZIEŃ
+      - conditions:
+          - condition: trigger
+            id: BlokadaDziennaON
+        sequence:
+          - variables:
+              tryb_podbitka_dzienny: true
+
+      # 🟢 BLOKADA DZIENNA OFF – ZMIERZCH
+      - conditions:
+          - condition: trigger
+            id: BlokadaDziennaOFF
+        sequence:
+          - variables:
+              tryb_podbitka_dzienny: false
+
+      # 🎄 TRYB: ŚWIĘTA – blokada podbitki
+      - conditions:
+          - condition: trigger
+            id: SwietaON
+        sequence:
+          - variables:
+              tryb_swieta_aktywny: true
+
+      # 🎄 TRYB: ŚWIĘTA OFF – przywrócenie normalnego działania
+      - conditions:
+          - condition: trigger
+            id: SwietaOFF
+        sequence:
+          - variables:
+              tryb_swieta_aktywny: false
