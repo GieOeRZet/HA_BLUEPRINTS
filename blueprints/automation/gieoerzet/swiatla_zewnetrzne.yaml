@@ -17,25 +17,22 @@ blueprint:
       name: 💡 Światła podbitki – całość
       description: Główna grupa lub światła do włączania/wyłączania całości.
       selector:
-        target:
-          entity:
-            domain: light
+        entity:
+          domain: light
 
     podbitka_srodki:
       name: 💡 Światła – środki
       description: Światła środkowe do wyłączenia o 22:00.
       selector:
-        target:
-          entity:
-            domain: light
+        entity:
+          domain: light
 
     podbitka_rogi:
       name: 💡 Światła – rogi
       description: Światła rogowe do wyłączenia 30 minut po 22:00.
       selector:
-        target:
-          entity:
-            domain: light
+        entity:
+          domain: light
 
     brama:
       name: 🚪 Brama wjazdowa
@@ -115,7 +112,8 @@ actions:
             id: PodbitkaON
         sequence:
           - service: light.turn_on
-            target: !input podbitka_all
+            target:
+              entity_id: !input podbitka_all
 
       # ---- O 22:00 – wyłączenie etapowe ----
       - conditions:
@@ -123,10 +121,12 @@ actions:
             id: PodbitkaOFF
         sequence:
           - service: light.turn_off
-            target: !input podbitka_srodki
+            target:
+              entity_id: !input podbitka_srodki
           - delay: "00:30:00"
           - service: light.turn_off
-            target: !input podbitka_rogi
+            target:
+              entity_id: !input podbitka_rogi
 
       # ---- RANO o 6:00 (jeśli ciemno) ----
       - conditions:
@@ -142,7 +142,8 @@ actions:
                 state: dawnlight
         sequence:
           - service: light.turn_on
-            target: !input podbitka_all
+            target:
+              entity_id: !input podbitka_all
 
       # ---- WYŁĄCZ przy pełnym dniu ----
       - conditions:
@@ -150,7 +151,8 @@ actions:
             id: PodbitkaDaylightOFF
         sequence:
           - service: light.turn_off
-            target: !input podbitka_all
+            target:
+              entity_id: !input podbitka_all
 
       # ---- BRAMA się otwiera (nocą) ----
       - conditions:
@@ -169,7 +171,9 @@ actions:
                 state: dawnlight
         sequence:
           - service: light.turn_on
-            target: !input podbitka_all
+            target:
+              entity_id: !input podbitka_all
           - delay: "00:05:00"
           - service: light.turn_off
-            target: !input podbitka_all
+            target:
+              entity_id: !input podbitka_all
