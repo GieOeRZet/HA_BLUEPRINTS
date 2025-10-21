@@ -10,7 +10,7 @@ blueprint:
     - Pomija działanie, gdy input_boolean.swieta = ON
 
   domain: automation
-  source_url: "https://raw.githubusercontent.com/GieOeRZet/akwarium/main/blueprints/automation/gieoerzet/podbitka.yaml"
+  source_url: "https://raw.githubusercontent.com/GieOeRZet/akwarium/main/blueprints/automation/gieoerzet/swiatła_zewnetrzne.yaml"
 
   input:
     podbitka_all:
