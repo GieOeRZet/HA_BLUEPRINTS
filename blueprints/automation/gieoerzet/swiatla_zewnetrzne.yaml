@@ -1,12 +1,12 @@
 blueprint:
-  name: 💡 Podbitka – Automatyczne światła + Brama
+  name: 💡 Podbitka + Podjazd – Automatyczne światła (Brama + Drzwi)
   description: >
-    Kompleksowa automatyzacja oświetlenia podbitki:
-    - Włącza o zmierzchu (gdy sensor.period_of_day ≠ daylight)
-    - Wyłącza o 22:00 etapami (środki → rogi)
-    - Rano o 6:00 włącza, jeśli nadal ciemno (nightlight lub dawnlight)
-    - Wyłącza przy daylight
-    - Włącza na 5 minut przy otwieraniu bramy, jeśli jest ciemno
+    Kompleksowa automatyzacja oświetlenia zewnętrznego:
+    - Podbitka włącza się po zmierzchu i wyłącza o 22:00 etapami
+    - Rano o 6:00 włącza się, jeśli nadal ciemno
+    - Wyłącza się przy pełnym dniu
+    - Osobne światła i czas świecenia po otwarciu bramy lub drzwi
+    - Licznik czasu resetuje się przy ponownym otwarciu bramy lub drzwi
     - Pomija działanie, gdy input_boolean.swieta = ON
 
   domain: automation
@@ -15,42 +15,42 @@ blueprint:
   input:
     podbitka_all:
       name: 💡 Światła podbitki – całość
-      description: Główna grupa lub światła do włączania/wyłączania całości.
       selector:
         entity:
           domain: light
 
     podbitka_srodki:
       name: 💡 Światła – środki
-      description: Światła środkowe do wyłączenia o 22:00.
       selector:
         entity:
           domain: light
 
     podbitka_rogi:
       name: 💡 Światła – rogi
-      description: Światła rogowe do wyłączenia 30 minut po 22:00.
       selector:
         entity:
           domain: light
 
+    czujnik_drzwi:
+      name: 🚪 Czujnik drzwi wejściowych
+      selector:
+        entity:
+          domain: binary_sensor
+
     brama:
-      name: 🚪 Brama wjazdowa
-      description: Encja bramy (cover), przy której otwieraniu światła mają się włączać.
+      name: 🚧 Brama wjazdowa
       selector:
         entity:
           domain: cover
 
     czujnik_dnia:
       name: 🌅 Sensor okresu dnia
-      description: Sensor np. sensor.period_of_day z wartościami daylight / nightlight / dawnlight.
       selector:
         entity:
           domain: sensor
 
     swieta:
       name: 🎄 Przełącznik „Święta”
-      description: Nie uruchamiaj automatyzacji, jeśli włączony.
       selector:
         entity:
           domain: input_boolean
@@ -66,6 +66,43 @@ blueprint:
       default: "06:00:00"
       selector:
         time: {}
+
+    # --- NOWE INPUTY ---
+    swiatla_bramy:
+      name: 💡 Światła zapalane po otwarciu bramy
+      description: Wybierz, które światła mają się włączać przy otwieraniu bramy.
+      selector:
+        target:
+          entity:
+            domain: light
+
+    swiatla_drzwi:
+      name: 💡 Światła zapalane po otwarciu drzwi
+      description: Wybierz, które światła mają się włączać przy otwarciu drzwi wejściowych.
+      selector:
+        target:
+          entity:
+            domain: light
+
+    czas_bramy:
+      name: ⏱️ Czas świecenia po otwarciu bramy (min)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 30
+          unit_of_measurement: min
+          mode: slider
+
+    czas_drzwi:
+      name: ⏱️ Czas świecenia po otwarciu drzwi (min)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 30
+          unit_of_measurement: min
+          mode: slider
 
 mode: restart
 
@@ -91,7 +128,12 @@ triggers:
   - platform: state
     entity_id: !input brama
     to: opening
-    id: PodbitkaBRAMA
+    id: BramaOPEN
+
+  - platform: state
+    entity_id: !input czujnik_drzwi
+    to: "on"
+    id: DrzwiOPEN
 
 conditions:
   - condition: state
@@ -100,6 +142,7 @@ conditions:
 
 actions:
   - choose:
+      # ---- WIECZOREM po zmierzchu ----
       - conditions:
           - condition: trigger
             id: PodbitkaON
@@ -108,6 +151,7 @@ actions:
             target:
               entity_id: !input podbitka_all
 
+      # ---- O 22:00 – wyłączenie etapowe ----
       - conditions:
           - condition: trigger
             id: PodbitkaOFF
@@ -120,6 +164,7 @@ actions:
             target:
               entity_id: !input podbitka_rogi
 
+      # ---- RANO o 6:00 (jeśli ciemno) ----
       - conditions:
           - condition: trigger
             id: PodbitkaRANO
@@ -136,6 +181,7 @@ actions:
             target:
               entity_id: !input podbitka_all
 
+      # ---- WYŁĄCZ przy pełnym dniu ----
       - conditions:
           - condition: trigger
             id: PodbitkaDaylightOFF
@@ -144,18 +190,10 @@ actions:
             target:
               entity_id: !input podbitka_all
 
-      # ---- BRAMA się otwiera (nocą) ----
+      # ---- OTWARCIE BRAMY (nocą) ----
       - conditions:
           - condition: trigger
-            id: PodbitkaBRAMA
-          - condition: template
-            value_template: >
-              {% set ent = (inputs.podbitka_all | default('')) %}
-              {% if ent and states(ent) is defined %}
-              {{ states(ent) == 'off' }}
-              {% else %}
-              true
-              {% endif %}
+            id: BramaOPEN
           - condition: or
             conditions:
               - condition: state
@@ -164,11 +202,36 @@ actions:
               - condition: state
                 entity_id: !input czujnik_dnia
                 state: dawnlight
+              - condition: state
+                entity_id: !input czujnik_dnia
+                state: dusklight
         sequence:
           - service: light.turn_on
-            target:
-              entity_id: !input podbitka_all
-          - delay: "00:05:00"
+            target: !input swiatla_bramy
+          - delay:
+              minutes: !input czas_bramy
           - service: light.turn_off
-            target:
-              entity_id: !input podbitka_all
+            target: !input swiatla_bramy
+
+      # ---- OTWARCIE DRZWI (nocą) ----
+      - conditions:
+          - condition: trigger
+            id: DrzwiOPEN
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input czujnik_dnia
+                state: nightlight
+              - condition: state
+                entity_id: !input czujnik_dnia
+                state: dawnlight
+              - condition: state
+                entity_id: !input czujnik_dnia
+                state: dusklight
+        sequence:
+          - service: light.turn_on
+            target: !input swiatla_drzwi
+          - delay:
+              minutes: !input czas_drzwi
+          - service: light.turn_off
+            target: !input swiatla_drzwi
