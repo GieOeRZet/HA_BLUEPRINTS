@@ -1,0 +1,174 @@
+blueprint:
+  name: 💡 Podbitka – Automatyczne światła + Brama
+  description: >
+    Kompleksowa automatyzacja oświetlenia podbitki:
+    - Włącza o zmierzchu (gdy sensor.period_of_day ≠ daylight)
+    - Wyłącza o 22:00 etapami (środki → rogi)
+    - Rano o 6:00 włącza, jeśli nadal ciemno (nightlight lub dawnlight)
+    - Wyłącza przy daylight
+    - Włącza na 5 minut przy otwieraniu bramy, jeśli jest ciemno
+    - Pomija działanie, gdy input_boolean.swieta = ON
+
+  domain: automation
+
+  input:
+    podbitka_all:
+      name: 💡 Światła podbitki – całość
+      description: Główna grupa lub światła do włączania/wyłączania całości.
+      selector:
+        target:
+          entity:
+            domain: light
+
+    podbitka_srodki:
+      name: 💡 Światła – środki
+      description: Światła środkowe do wyłączenia o 22:00.
+      selector:
+        target:
+          entity:
+            domain: light
+
+    podbitka_rogi:
+      name: 💡 Światła – rogi
+      description: Światła rogowe do wyłączenia 30 minut po 22:00.
+      selector:
+        target:
+          entity:
+            domain: light
+
+    brama:
+      name: 🚪 Brama wjazdowa
+      description: Encja bramy (cover), przy której otwieraniu światła mają się włączać.
+      selector:
+        entity:
+          domain: cover
+
+    czujnik_dnia:
+      name: 🌅 Sensor okresu dnia
+      description: Sensor np. sensor.period_of_day z wartościami daylight / nightlight / dawnlight.
+      selector:
+        entity:
+          domain: sensor
+
+    swieta:
+      name: 🎄 Przełącznik „Święta”
+      description: Nie uruchamiaj automatyzacji, jeśli włączony.
+      selector:
+        entity:
+          domain: input_boolean
+
+    godzina_off:
+      name: 🕙 Godzina wyłączenia wieczorem
+      default: "22:00:00"
+      selector:
+        time: {}
+
+    godzina_rano:
+      name: 🌅 Godzina włączenia rano
+      default: "06:00:00"
+      selector:
+        time: {}
+
+mode: restart
+
+triggers:
+  # ---- WIECZOREM po zmierzchu ----
+  - platform: state
+    entity_id: !input czujnik_dnia
+    from: daylight
+    id: PodbitkaON
+
+  # ---- Wschód pełny (wyłączenie) ----
+  - platform: state
+    entity_id: !input czujnik_dnia
+    to: daylight
+    id: PodbitkaDaylightOFF
+
+  # ---- Godzina wyłączenia ----
+  - platform: time
+    at: !input godzina_off
+    id: PodbitkaOFF
+
+  # ---- Godzina poranna ----
+  - platform: time
+    at: !input godzina_rano
+    id: PodbitkaRANO
+
+  # ---- Otwieranie bramy ----
+  - platform: state
+    entity_id: !input brama
+    to: opening
+    id: PodbitkaBRAMA
+
+conditions:
+  # Nie działa w trybie świątecznym
+  - condition: state
+    entity_id: !input swieta
+    state: "off"
+
+actions:
+  - choose:
+      # ---- WIECZOREM po zmierzchu ----
+      - conditions:
+          - condition: trigger
+            id: PodbitkaON
+        sequence:
+          - service: light.turn_on
+            target: !input podbitka_all
+
+      # ---- O 22:00 – wyłączenie etapowe ----
+      - conditions:
+          - condition: trigger
+            id: PodbitkaOFF
+        sequence:
+          - service: light.turn_off
+            target: !input podbitka_srodki
+          - delay: "00:30:00"
+          - service: light.turn_off
+            target: !input podbitka_rogi
+
+      # ---- RANO o 6:00 (jeśli ciemno) ----
+      - conditions:
+          - condition: trigger
+            id: PodbitkaRANO
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input czujnik_dnia
+                state: nightlight
+              - condition: state
+                entity_id: !input czujnik_dnia
+                state: dawnlight
+        sequence:
+          - service: light.turn_on
+            target: !input podbitka_all
+
+      # ---- WYŁĄCZ przy pełnym dniu ----
+      - conditions:
+          - condition: trigger
+            id: PodbitkaDaylightOFF
+        sequence:
+          - service: light.turn_off
+            target: !input podbitka_all
+
+      # ---- BRAMA się otwiera (nocą) ----
+      - conditions:
+          - condition: trigger
+            id: PodbitkaBRAMA
+          - condition: state
+            target: !input podbitka_all
+            state: "off"
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input czujnik_dnia
+                state: nightlight
+              - condition: state
+                entity_id: !input czujnik_dnia
+                state: dawnlight
+        sequence:
+          - service: light.turn_on
+            target: !input podbitka_all
+          - delay: "00:05:00"
+          - service: light.turn_off
+            target: !input podbitka_all
