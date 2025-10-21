@@ -15,42 +15,56 @@ blueprint:
   input:
     podbitka_all:
       name: 💡 Światła podbitki – całość
+      description: Główna grupa lub światła do włączania/wyłączania całości.
       selector:
         entity:
           domain: light
 
     podbitka_srodki:
       name: 💡 Światła – środki
+      description: Światła środkowe do wyłączenia o 22:00.
       selector:
         entity:
           domain: light
 
     podbitka_rogi:
       name: 💡 Światła – rogi
+      description: Światła rogowe do wyłączenia 30 minut po 22:00.
+      selector:
+        entity:
+          domain: light
+
+    podjazd_swiatlo:
+      name: 🚗 Światło podjazdu
+      description: Oświetlenie podjazdu lub ścieżki – może być użyte przy bramie lub drzwiach.
       selector:
         entity:
           domain: light
 
     czujnik_drzwi:
       name: 🚪 Czujnik drzwi wejściowych
+      description: Sensor otwarcia drzwi wejściowych (binary_sensor).
       selector:
         entity:
           domain: binary_sensor
 
     brama:
       name: 🚧 Brama wjazdowa
+      description: Encja bramy (cover), która uruchamia światła po otwarciu.
       selector:
         entity:
           domain: cover
 
     czujnik_dnia:
       name: 🌅 Sensor okresu dnia
+      description: Sensor np. sensor.period_of_day z wartościami daylight / nightlight / dawnlight / dusklight.
       selector:
         entity:
           domain: sensor
 
     swieta:
       name: 🎄 Przełącznik „Święta”
+      description: Nie uruchamiaj automatyzacji, jeśli włączony.
       selector:
         entity:
           domain: input_boolean
@@ -67,10 +81,13 @@ blueprint:
       selector:
         time: {}
 
-    # --- NOWE INPUTY ---
+    # --- NOWE INPUTY (z podpowiedziami) ---
     swiatla_bramy:
       name: 💡 Światła zapalane po otwarciu bramy
-      description: Wybierz, które światła mają się włączać przy otwieraniu bramy.
+      description: >
+        Wybierz spośród wcześniej dodanych świateł (np. podbitka, podjazd),
+        które mają się zapalać przy otwieraniu bramy.
+      default: !input podbitka_all
       selector:
         target:
           entity:
@@ -78,7 +95,10 @@ blueprint:
 
     swiatla_drzwi:
       name: 💡 Światła zapalane po otwarciu drzwi
-      description: Wybierz, które światła mają się włączać przy otwarciu drzwi wejściowych.
+      description: >
+        Wybierz spośród wcześniej dodanych świateł (np. podjazd),
+        które mają się zapalać przy otwieraniu drzwi wejściowych.
+      default: !input podjazd_swiatlo
       selector:
         target:
           entity:
@@ -86,6 +106,7 @@ blueprint:
 
     czas_bramy:
       name: ⏱️ Czas świecenia po otwarciu bramy (min)
+      description: Po ilu minutach wyłączyć światła zapalone przez bramę.
       default: 5
       selector:
         number:
@@ -96,6 +117,7 @@ blueprint:
 
     czas_drzwi:
       name: ⏱️ Czas świecenia po otwarciu drzwi (min)
+      description: Po ilu minutach wyłączyć światła zapalone przez drzwi.
       default: 5
       selector:
         number:
