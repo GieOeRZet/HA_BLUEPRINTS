@@ -70,43 +70,36 @@ blueprint:
 mode: restart
 
 triggers:
-  # ---- WIECZOREM po zmierzchu ----
   - platform: state
     entity_id: !input czujnik_dnia
     from: daylight
     id: PodbitkaON
 
-  # ---- Wschód pełny (wyłączenie) ----
   - platform: state
     entity_id: !input czujnik_dnia
     to: daylight
     id: PodbitkaDaylightOFF
 
-  # ---- Godzina wyłączenia ----
   - platform: time
     at: !input godzina_off
     id: PodbitkaOFF
 
-  # ---- Godzina poranna ----
   - platform: time
     at: !input godzina_rano
     id: PodbitkaRANO
 
-  # ---- Otwieranie bramy ----
   - platform: state
     entity_id: !input brama
     to: opening
     id: PodbitkaBRAMA
 
 conditions:
-  # Nie działa w trybie świątecznym
   - condition: state
     entity_id: !input swieta
     state: "off"
 
 actions:
   - choose:
-      # ---- WIECZOREM po zmierzchu ----
       - conditions:
           - condition: trigger
             id: PodbitkaON
@@ -115,7 +108,6 @@ actions:
             target:
               entity_id: !input podbitka_all
 
-      # ---- O 22:00 – wyłączenie etapowe ----
       - conditions:
           - condition: trigger
             id: PodbitkaOFF
@@ -128,7 +120,6 @@ actions:
             target:
               entity_id: !input podbitka_rogi
 
-      # ---- RANO o 6:00 (jeśli ciemno) ----
       - conditions:
           - condition: trigger
             id: PodbitkaRANO
@@ -145,7 +136,6 @@ actions:
             target:
               entity_id: !input podbitka_all
 
-      # ---- WYŁĄCZ przy pełnym dniu ----
       - conditions:
           - condition: trigger
             id: PodbitkaDaylightOFF
@@ -159,8 +149,13 @@ actions:
           - condition: trigger
             id: PodbitkaBRAMA
           - condition: template
-            value_template: "{{ states(!input podbitka_all) == 'off' }}"
-            state: "off"
+            value_template: >
+              {% set ent = (inputs.podbitka_all | default('')) %}
+              {% if ent and states(ent) is defined %}
+              {{ states(ent) == 'off' }}
+              {% else %}
+              true
+              {% endif %}
           - condition: or
             conditions:
               - condition: state
