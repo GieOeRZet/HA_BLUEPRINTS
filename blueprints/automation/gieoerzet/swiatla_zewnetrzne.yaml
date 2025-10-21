@@ -158,8 +158,8 @@ actions:
       - conditions:
           - condition: trigger
             id: PodbitkaBRAMA
-          - condition: state
-            entity_id: !input podbitka_all
+          - condition: template
+            value_template: "{{ states(!input podbitka_all) == 'off' }}"
             state: "off"
           - condition: or
             conditions:
